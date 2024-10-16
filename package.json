@@ -6,8 +6,11 @@
     "node": ">=18.x"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
     "axios": "^1.6.8",
     "bcryptjs": "^2.4.3",
+    "bootstrap": "^5.3.3",
     "connect-pg-simple": "^9.0.1",
     "dotenv": "^16.0.3",
     "express": "^4.17.1",
@@ -16,6 +19,7 @@
     "passport-local": "^1.0.0",
     "pg": "^8.5.1",
     "react": "^18.2.0",
+    "react-bootstrap": "^2.10.5",
     "react-dom": "^18.2.0",
     "react-redux": "^7.2.6",
     "react-router-dom": "^5.3.4",
