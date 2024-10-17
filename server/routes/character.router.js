@@ -4,6 +4,8 @@ const router = express.Router();
 const {
   rejectUnauthenticated,
 } = require("../modules/authentication-middleware");
+const races = require("../data/races.json");
+const vocations = require("../data/vocations.json");
 
 // ====== ROUTER CHARACTER GET ======
 router.get("/", async (req, res) => {
@@ -22,80 +24,82 @@ router.get("/:id", async (req, res) => {
   const characterId = req.params.id;
   try {
     const query = `
-    SELECT
-        c.id AS character_id,
-        c.name AS character_name,
-        c.race,
-        c.vocation,
-        c.specialty,
-        c.max_hp,
-        c.current_hp,
-        c.focus_points,
-        c.soul_rank,
-        c.speed_class,
-        c.height,
-        c.age,
-        c.glint_pieces,
-        c.current_thp,
-        c.current_ar,
-        c.current_os,
-        c.current_mr,
-        c.innate_willpower,
-        c.extended_willpower,
-        c.strength,
-        c.dexterity,
-        c.intelligence,
-        c.charisma,
-        c.vitality,
-        c.arcana,
-        c.ferocity,
-        c.persuasion,
-        c.deception,
-        c.bargaining,
-        c.performance,
-        c.charm,
-        c.acrobatics,
-        c.athletics,
-        c.agility,
-        c.lifting,
-        c.sleight_of_hand,
-        c.stealth,
-        c.medicine,
-        c.weapon_mastery,
-        c.carving,
-        c.history,
-        c.wisdom,
-        c.science,
-        c.technology,
-        c.foraging,
-        c.endurance,
-        c.resistance,
-        c.feat_of_heroism,
-        c.leadership,
-        c.counter_charisma,
-        c.magical_knowledge,
-        c.intimidation,
-        STRING_AGG(DISTINCT ms.stat_name || ': ' || ms.value, ', ') AS micro_stats,
-        STRING_AGG(DISTINCT lang.language_name, ', ') AS languages,
-        STRING_AGG(DISTINCT sp.spell_name || ' (' || COALESCE(sp.damage_die, 'N/A') || ')', ', ') AS spells,
-        STRING_AGG(DISTINCT w.weapon_name || ' (' || COALESCE(w.damage_die, 'N/A') || ')', ', ') AS weapons,
-        STRING_AGG(DISTINCT eq.name || ' (' || COALESCE(eq.type, 'N/A') || ')', ', ') AS equipment,
-        STRING_AGG(DISTINCT sk.skill_name || ' (' || COALESCE(sk.damage_die, 'N/A') || ')', ', ') AS skills
-    FROM characters c
-    LEFT JOIN micro_stats ms ON c.id = ms.character_id
-    LEFT JOIN languages lang ON c.id = lang.character_id
-    LEFT JOIN spells sp ON c.id = sp.character_id
-    LEFT JOIN weapons w ON c.id = w.character_id
-    LEFT JOIN equipment eq ON c.id = eq.character_id
-    LEFT JOIN skills sk ON c.id = sk.character_id
-    WHERE c.id = $1
-    GROUP BY c.id;
-  `;
+      SELECT
+          c.id AS character_id,
+          c.name AS character_name,
+          c.race,
+          c.vocation,
+          c.specialty,
+          c.max_hp,
+          c.current_hp,
+          c.focus_points,
+          c.soul_rank,
+          c.speed_class,
+          c.height,
+          c.age,
+          c.glint_pieces,
+          c.current_thp,
+          c.current_ar,
+          c.current_os,
+          c.current_mr,
+          c.innate_willpower,
+          c.extended_willpower,
+          c.strength,
+          c.dexterity,
+          c.intelligence,
+          c.charisma,
+          c.vitality,
+          c.arcana,
+          c.ferocity,
+          c.persuasion,
+          c.deception,
+          c.bargaining,
+          c.performance,
+          c.charm,
+          c.acrobatics,
+          c.athletics,
+          c.agility,
+          c.lifting,
+          c.sleight_of_hand,
+          c.stealth,
+          c.medicine,
+          c.weapon_mastery,
+          c.carving,
+          c.history,
+          c.wisdom,
+          c.science,
+          c.technology,
+          c.foraging,
+          c.endurance,
+          c.resistance,
+          c.feat_of_heroism,
+          c.leadership,
+          c.counter_charisma,
+          c.magical_knowledge,
+          c.intimidation,
+          -- Handle NULL fields by providing 'N/A' for missing values
+          STRING_AGG(DISTINCT ms.stat_name || ': ' || COALESCE(ms.value::TEXT, 'N/A'), ', ') AS micro_stats,
+          STRING_AGG(DISTINCT lang.language_name, ', ') AS languages,
+          STRING_AGG(DISTINCT sp.spell_name || ' (' || COALESCE(sp.damage_die, 'N/A') || ', ' || COALESCE(sp.cost, 'N/A') || ', ' || COALESCE(sp.action_type, 'N/A') || ')', ', ') AS spells,
+          STRING_AGG(DISTINCT w.weapon_name || ' (' || COALESCE(w.damage_die, 'N/A') || ', ' || COALESCE(w.description, 'N/A') || ')', ', ') AS weapons,
+          STRING_AGG(DISTINCT eq.name || ' (' || COALESCE(eq.type, 'N/A') || ', ' || COALESCE(eq.description, 'N/A') || ')', ', ') AS equipment,
+          STRING_AGG(DISTINCT sk.skill_name || ' (' || COALESCE(sk.description, 'N/A') || ', ' || COALESCE(sk.action_type, 'N/A') || ', ' || COALESCE(sk.damage_die, 'N/A') || ', ' || COALESCE(sk.cost, 'N/A') || ')', ', ') AS skills
+      FROM characters c
+      LEFT JOIN micro_stats ms ON c.id = ms.character_id
+      LEFT JOIN languages lang ON c.id = lang.character_id
+      LEFT JOIN spells sp ON c.id = sp.character_id
+      LEFT JOIN weapons w ON c.id = w.character_id
+      LEFT JOIN equipment eq ON c.id = eq.character_id
+      LEFT JOIN skills sk ON c.id = sk.character_id
+      WHERE c.id = $1
+      GROUP BY c.id;
+    `;
 
     const result = await pool.query(query, [characterId]);
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "Character not found" });
     }
+
     res.status(200).json(result.rows[0]);
   } catch (error) {
     console.error("Error fetching character by ID:", error);
@@ -205,71 +209,13 @@ router.get("/:id/micro-stats", async (req, res) => {
   }
 });
 
-const vocations = {
-  wanderer: {
-    weaponry: [
-      {
-        weapon_name: "Butterfly Swords",
-        weapon_description: "Small dual-wielded swords",
-        weapon_damage: "1d4 + Dex * 2 SL",
-      },
-      {
-        weapon_name: "Art",
-        weapon_description: "Small low-ranged rail gun",
-        weapon_damage: "1d6 PR 50ft",
-      },
-    ],
-    equipment: [
-      "Backpack/Satchel",
-      "Cloth shirt",
-      "Fur-lined leather armor (1 AR)",
-      "Steel-toed boots",
-      "Simple pants",
-      "100ft Rope",
-      "Small cape",
-      "Flute",
-      "1 Small medical kit (Medicine + 10)",
-      "1 Sewing kit",
-      "Fire kit",
-      "Knoll watch",
-      "5 Lockpicks",
-      "233.5 Glint",
-      "20 Art pellets",
-    ],
-    skills: [
-      {
-        skill_name: "Dual Welding [Dex]",
-        description: "You can dually wield Dex weapons you are proficient in.",
-      },
-      {
-        skill_name: "Close Snipe",
-        description:
-          "Shooting an enemy within 10ft always results in a headshot.",
-      },
-    ],
-    languages: ["Native", "Madorian", "Novorian", "+ two of player's choice"],
-    minor_stats: {
-      medicine: 2,
-      performance: 2,
-      athletics: 2,
-      foraging_carving: 2,
-    },
-    micro_stats: [
-      { micro_name: "Light Armor", stat: null },
-      { micro_name: "Butterfly Swords", stat: null },
-      { micro_name: "Arts", stat: null },
-      { micro_name: "Flute", stat: null },
-    ],
-  },
-};
-
 /**
  * POST route template
  */
 // ====== ROUTER CHARACTER POST ======
 router.post("/", rejectUnauthenticated, async (req, res) => {
   const user_id = req.user.id;
-  const {
+  let {
     name,
     race,
     vocation,
@@ -321,7 +267,61 @@ router.post("/", rejectUnauthenticated, async (req, res) => {
     counter_charisma,
     magical_knowledge,
     intimidation,
+    magic_save_modifier,
+    physical_save_modifier,
   } = req.body;
+
+  const raceData = races[race.toLowerCase()];
+  if (raceData) {
+    charisma += raceData.modifiers.charisma || 0;
+    strength += raceData.modifiers.strength || 0;
+    dexterity += raceData.modifiers.dexterity || 0;
+    intelligence += raceData.modifiers.intelligence || 0;
+    vitality += raceData.modifiers.vitality || 0;
+    innate_willpower += raceData.modifiers.innate_willpower || 0;
+    arcana += raceData.modifiers.arcana || 0;
+    ferocity += raceData.modifiers.ferocity || 0;
+  }
+
+  const vocationData = vocations[vocation.toLowerCase()];
+  if (vocationData) {
+    persuasion += vocationData.minor_stats.persuasion || 0;
+    deception += vocationData.minor_stats.deception || 0;
+    bargaining += vocationData.minor_stats.bargaining || 0;
+    performance += vocationData.minor_stats.performance || 0;
+    charm += vocationData.minor_stats.charm || 0;
+
+    acrobatics += vocationData.minor_stats.acrobatics || 0;
+    athletics += vocationData.minor_stats.athletics || 0;
+    agility += vocationData.minor_stats.agility || 0;
+    lifting += vocationData.minor_stats.lifting || 0;
+
+    sleight_of_hand += vocationData.minor_stats.sleight_of_hand || 0;
+    stealth += vocationData.minor_stats.stealth || 0;
+    medicine += vocationData.minor_stats.medicine || 0;
+    weapon_mastery += vocationData.minor_stats.weapon_mastery || 0;
+    carving += vocationData.minor_stats.carving || 0;
+
+    history += vocationData.minor_stats.history || 0;
+    wisdom += vocationData.minor_stats.wisdom || 0;
+    science += vocationData.minor_stats.science || 0;
+    technology += vocationData.minor_stats.technology || 0;
+    foraging += vocationData.minor_stats.foraging || 0;
+
+    endurance += vocationData.minor_stats.endurance || 0;
+    resistance += vocationData.minor_stats.resistance || 0;
+
+    feat_of_heroism += vocationData.minor_stats.feat_of_heroism || 0;
+    leadership += vocationData.minor_stats.leadership || 0;
+    counter_charisma += vocationData.minor_stats.counter_charisma || 0;
+
+    magical_knowledge += vocationData.minor_stats.magical_knowledge || 0;
+    magic_save_modifier += vocationData.minor_stats.magic_save_modifier || 0;
+
+    intimidation += vocationData.minor_stats.intimidation || 0;
+    physical_save_modifier +=
+      vocationData.minor_stats.physical_save_modifier || 0;
+  }
 
   try {
     const characterQuery = `
@@ -331,12 +331,12 @@ router.post("/", rejectUnauthenticated, async (req, res) => {
         extended_willpower, strength, dexterity, intelligence, charisma, vitality, arcana, ferocity, persuasion, 
         deception, bargaining, performance, charm, acrobatics, athletics, agility, lifting, sleight_of_hand, 
         stealth, medicine, weapon_mastery, carving, history, wisdom, science, technology, foraging, endurance, 
-        resistance, feat_of_heroism, leadership, counter_charisma, magical_knowledge, intimidation
+        resistance, feat_of_heroism, leadership, counter_charisma, magical_knowledge, intimidation, magic_save_modifier, physical_save_modifier
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, 
         $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, 
-        $43, $44, $45, $46, $47, $48, $49, $50, $51, $52
+        $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54
       ) RETURNING id;
     `;
     const characterResult = await pool.query(characterQuery, [
@@ -392,14 +392,28 @@ router.post("/", rejectUnauthenticated, async (req, res) => {
       counter_charisma,
       magical_knowledge,
       intimidation,
+      magic_save_modifier,
+      physical_save_modifier,
     ]);
 
     const characterId = characterResult.rows[0].id;
-    const vocationData = vocations[vocation];
 
     console.log("Inserting weapons:", vocationData.weaponry);
     console.log("Inserting equipment:", vocationData.equipment);
     console.log("Inserting skills:", vocationData.skills);
+
+    // ====== INSERT PASSIVES ======
+    for (const passive of raceData.passives) {
+      const skillQuery = `
+        INSERT INTO skills (character_id, skill_name, description)
+        VALUES ($1, $2, $3);
+      `;
+      await pool.query(skillQuery, [
+        characterId,
+        passive.skill_name,
+        passive.description,
+      ]);
+    }
 
     // Insert weapons
     for (const weapon of vocationData.weaponry) {
@@ -418,22 +432,29 @@ router.post("/", rejectUnauthenticated, async (req, res) => {
     // Insert equipment
     for (const equipmentItem of vocationData.equipment) {
       const equipmentQuery = `
-        INSERT INTO equipment (character_id, name)
-        VALUES ($1, $2);
+        INSERT INTO equipment (character_id, name, description)
+        VALUES ($1, $2, $3);
       `;
-      await pool.query(equipmentQuery, [characterId, equipmentItem]);
+      await pool.query(equipmentQuery, [
+        characterId,
+        equipmentItem.name,
+        equipmentItem.description,
+      ]);
     }
 
     // Insert skills
     for (const skill of vocationData.skills) {
       const skillQuery = `
-        INSERT INTO skills (character_id, skill_name, description)
-        VALUES ($1, $2, $3);
+        INSERT INTO skills (character_id, skill_name, description, action_type, damage_die, cost)
+        VALUES ($1, $2, $3, $4, $5, $6);
       `;
       await pool.query(skillQuery, [
         characterId,
         skill.skill_name,
         skill.description,
+        skill.action_type,
+        skill.damage_die,
+        skill.cost,
       ]);
     }
 
@@ -444,6 +465,21 @@ router.post("/", rejectUnauthenticated, async (req, res) => {
         VALUES ($1, $2);
       `;
       await pool.query(languageQuery, [characterId, language]);
+    }
+
+    // ====== INSERT SPELLS ======
+    for (const spell of vocationData.spells) {
+      const spellQuery = `
+      INSERT INTO spells (character_id, spell_name, damage_die, cost, action_type, description)
+      VALUES ($1, $2, $3, $4, $5, $6)`;
+      await pool.query(spellQuery, [
+        characterId,
+        spell.spell_name,
+        spell.damage_die,
+        spell.cost,
+        spell.action_type,
+        spell.description,
+      ]);
     }
 
     // Insert micro stats
@@ -469,6 +505,207 @@ router.post("/", rejectUnauthenticated, async (req, res) => {
       message: "Error creating character and inserting vocation data",
       error: error.message,
     });
+  }
+});
+
+// ===============
+// === DELETES ===
+// ===============
+
+// ====== DELETE CHARACTER AND ASSOCIATED DATA ======
+router.delete("/:id", async (req, res) => {
+  const characterId = req.params.id;
+
+  try {
+    // Start a transaction
+    await pool.query("BEGIN");
+
+    // Delete associated spells
+    await pool.query(`DELETE FROM spells WHERE character_id = $1`, [
+      characterId,
+    ]);
+
+    // Delete associated weapons
+    await pool.query(`DELETE FROM weapons WHERE character_id = $1`, [
+      characterId,
+    ]);
+
+    // Delete associated skills
+    await pool.query(`DELETE FROM skills WHERE character_id = $1`, [
+      characterId,
+    ]);
+
+    // Delete associated equipment
+    await pool.query(`DELETE FROM equipment WHERE character_id = $1`, [
+      characterId,
+    ]);
+
+    // Delete associated languages
+    await pool.query(`DELETE FROM languages WHERE character_id = $1`, [
+      characterId,
+    ]);
+
+    // Delete associated micro_stats
+    await pool.query(`DELETE FROM micro_stats WHERE character_id = $1`, [
+      characterId,
+    ]);
+
+    // Finally, delete the character
+    const result = await pool.query(
+      `DELETE FROM characters WHERE id = $1 RETURNING *`,
+      [characterId]
+    );
+
+    if (result.rows.length === 0) {
+      await pool.query("ROLLBACK");
+      return res.status(404).json({ message: "Character not found" });
+    }
+
+    // Commit transaction
+    await pool.query("COMMIT");
+
+    res
+      .status(200)
+      .json({ message: "Character and associated data deleted successfully" });
+  } catch (error) {
+    // Rollback transaction in case of error
+    await pool.query("ROLLBACK");
+    console.error("Error deleting character and associated data:", error);
+    res
+      .status(500)
+      .json({ message: "Error deleting character and associated data" });
+  }
+});
+
+// ====== DELETE SPELLS FOR CHARACTER ======
+router.delete("/:id/spells", async (req, res) => {
+  const characterId = req.params.id;
+  try {
+    const result = await pool.query(
+      `DELETE FROM spells WHERE character_id = $1 RETURNING *`,
+      [characterId]
+    );
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No spells found for this character" });
+    }
+
+    res.status(200).json({ message: "Spells deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting spells:", error);
+    res.status(500).json({ message: "Error deleting spells" });
+  }
+});
+
+// ====== DELETE WEAPONS FOR CHARACTER ======
+router.delete("/:id/weapons", async (req, res) => {
+  const characterId = req.params.id;
+  try {
+    const result = await pool.query(
+      `DELETE FROM weapons WHERE character_id = $1 RETURNING *`,
+      [characterId]
+    );
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No weapons found for this character" });
+    }
+
+    res.status(200).json({ message: "Weapons deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting weapons:", error);
+    res.status(500).json({ message: "Error deleting weapons" });
+  }
+});
+
+// ====== DELETE SKILLS FOR CHARACTER ======
+router.delete("/:id/skills", async (req, res) => {
+  const characterId = req.params.id;
+  try {
+    const result = await pool.query(
+      `DELETE FROM skills WHERE character_id = $1 RETURNING *`,
+      [characterId]
+    );
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No skills found for this character" });
+    }
+
+    res.status(200).json({ message: "Skills deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting skills:", error);
+    res.status(500).json({ message: "Error deleting skills" });
+  }
+});
+
+// ====== DELETE EQUIPMENT FOR CHARACTER ======
+router.delete("/:id/equipment", async (req, res) => {
+  const characterId = req.params.id;
+  try {
+    const result = await pool.query(
+      `DELETE FROM equipment WHERE character_id = $1 RETURNING *`,
+      [characterId]
+    );
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No equipment found for this character" });
+    }
+
+    res.status(200).json({ message: "Equipment deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting equipment:", error);
+    res.status(500).json({ message: "Error deleting equipment" });
+  }
+});
+
+// ====== DELETE LANGUAGES FOR CHARACTER ======
+router.delete("/:id/languages", async (req, res) => {
+  const characterId = req.params.id;
+  try {
+    const result = await pool.query(
+      `DELETE FROM languages WHERE character_id = $1 RETURNING *`,
+      [characterId]
+    );
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No languages found for this character" });
+    }
+
+    res.status(200).json({ message: "Languages deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting languages:", error);
+    res.status(500).json({ message: "Error deleting languages" });
+  }
+});
+
+// ====== DELETE MICRO STATS FOR CHARACTER ======
+router.delete("/:id/micro-stats", async (req, res) => {
+  const characterId = req.params.id;
+  try {
+    const result = await pool.query(
+      `DELETE FROM micro_stats WHERE character_id = $1 RETURNING *`,
+      [characterId]
+    );
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No micro stats found for this character" });
+    }
+
+    res.status(200).json({ message: "Micro stats deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting micro stats:", error);
+    res.status(500).json({ message: "Error deleting micro stats" });
   }
 });
 

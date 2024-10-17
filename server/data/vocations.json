@@ -1,0 +1,457 @@
+
+{
+    "wanderer": {
+      "weaponry": [
+        {
+          "weapon_name": "Butterfly Swords",
+          "weapon_description": "Small dual-wielded swords",
+          "weapon_damage": "1d4 + Dex * 2 SL"
+        },
+        {
+          "weapon_name": "Art",
+          "weapon_description": "Small low-ranged rail gun",
+          "weapon_damage": "1d6 PR 50ft"
+        }
+      ],
+      "equipment": [
+        {
+          "name": "Backpack/Satchel",
+          "description": "A sturdy leather bag to carry personal items and equipment."
+        },
+        {
+          "name": "Cloth Shirt",
+          "description": "A basic cloth shirt, comfortable and breathable for travel."
+        },
+        {
+          "name": "Fur-lined Leather Armor (1 AR)",
+          "description": "A set of light armor lined with fur for warmth, offering 1 Armor Rating."
+        },
+        {
+          "name": "Steel-toed Boots",
+          "description": "Heavy-duty boots with reinforced steel toes for protection."
+        },
+        {
+          "name": "Simple Pants",
+          "description": "Basic trousers, durable and suitable for most terrains."
+        },
+        {
+          "name": "100ft Rope",
+          "description": "A long, sturdy rope made of woven fibers, ideal for climbing or securing items."
+        },
+        {
+          "name": "Small Cape",
+          "description": "A short cape, offering minimal protection from the elements but adding style."
+        },
+        {
+          "name": "Flute",
+          "description": "A simple musical instrument used for entertainment or signaling."
+        },
+        {
+          "name": "Small Medical Kit (Medicine +10)",
+          "description": "A compact kit containing bandages and herbs, providing +10 to Medicine checks."
+        },
+        {
+          "name": "Sewing Kit",
+          "description": "A small kit containing needles and thread for repairing clothes or equipment."
+        },
+        {
+          "name": "Fire Kit",
+          "description": "A kit containing flint, tinder, and other materials for starting a fire."
+        },
+        {
+          "name": "Knoll Watch",
+          "description": "A basic device meant for long ranged contact and internet access."
+        },
+        {
+          "name": "Lockpicks (5)",
+          "description": "A set of 5 lockpicks, useful for opening locked doors or chests discreetly."
+        },
+        {
+          "name": "233.5 Glint",
+          "description": "A sum of currency used in trade and commerce, worth 233.5 units."
+        },
+        {
+          "name": "Art Pellets (20)",
+          "description": "Ammunition for low-ranged weapons like Arts."
+        }
+      ],
+      "spells": [],
+      "skills": [
+        {
+          "skill_name": "Dual Welding [Dex]",
+          "description": "You can dually wield Dex weapons you are proficient in."
+        },
+        {
+          "skill_name": "Close Snipe",
+          "description": "Shooting an enemy within 10ft always results in a headshot."
+        },
+        {
+          "skill_name": "test skill 1",
+          "damage_die": "100d100",
+          "cost": "Your soul"
+        }
+      ],
+      "languages": ["Native", "Madorian", "Novorian", "+ two of player's choice"],
+      "minor_stats": {
+        "medicine": 2,
+        "performance": 2,
+        "athletics": 2,
+        "foraging_carving": 2
+      },
+      "micro_stats": [
+        { "micro_name": "Light Armor", "stat": null },
+        { "micro_name": "Butterfly Swords", "stat": null },
+        { "micro_name": "Arts", "stat": null },
+        { "micro_name": "Flute", "stat": null }
+      ]
+    },
+    "warrior": {
+      "weaponry": [
+        {
+          "weapon_name": "Hand-and-a-half sword",
+          "weapon_description": "A versatile sword used with one or two hands.",
+          "weapon_damage": "2d8 + Dex SL"
+        },
+        {
+          "weapon_name": "Flanged mace",
+          "weapon_description": "A spiked mace for delivering heavy, crushing blows.",
+          "weapon_damage": "1d8 + Dex BL"
+        },
+        {
+          "weapon_name": "Buckler",
+          "weapon_description": "A small shield used to parry attacks.",
+          "weapon_damage": "Parries +1"
+        },
+        {
+          "weapon_name": "Buster",
+          "weapon_description": "A reinforced bracer designed for striking.",
+          "weapon_damage": "1d4 + Str BL"
+        },
+        {
+          "weapon_name": "Rapier",
+          "weapon_description": "A slender, sharply pointed sword, ideal for thrusting.",
+          "weapon_damage": "1d10 + Dex PR"
+        },
+        {
+          "weapon_name": "Falchion",
+          "weapon_description": "A broad, curved sword for slashing.",
+          "weapon_damage": "2d6 + Dex SL"
+        },
+        {
+          "weapon_name": "Scale mail",
+          "weapon_description": "Armor made of overlapping metal scales, offering protection.",
+          "weapon_damage": "3 AR"
+        },
+        {
+          "weapon_name": "Steel gauntlets",
+          "weapon_description": "Reinforced gloves offering better grip and hand protection.",
+          "weapon_damage": "Unarmed +1"
+        },
+        {
+          "weapon_name": "Steel boots",
+          "weapon_description": "Heavy-duty steel boots for protection and combat."
+        },
+        {
+          "weapon_name": "Simple shirt and pants",
+          "weapon_description": "Basic, durable clothing for everyday wear."
+        }
+      ],
+      "equipment": [
+        {
+          "name": "Heavy cloak",
+          "description": "A thick cloak for warmth and protection from the elements."
+        },
+        {
+          "name": "Knoll watch",
+          "description": "A basic device used for keeping time and contact."
+        },
+        {
+          "name": "Sharpening kit",
+          "description": "A kit containing sharpening stones for maintaining blades."
+        },
+        {
+          "name": "94 GL",
+          "description": "A sum of 94 Glint, the currency of trade."
+        },
+        {
+          "name": "5 Powder bombs",
+          "description": "Explosive bombs that deal 2d4 damage in a 10ft radius."
+        }
+      ],
+      "spells": [],
+      "skills": [
+        {
+          "skill_name": "Weapon master",
+          "description": "Gain advantage when trying to learn a new melee weapon."
+        },
+        {
+          "skill_name": "Dexterous fighter",
+          "description": "Switch your held weapon without using an action or bonus action."
+        },
+        {
+          "skill_name": "Shoulder bash [Hand-and-a-half sword]",
+          "description": "After landing an attack, use a bonus action to bash a medium creature, dealing 1d4 BL and unbalancing them."
+        },
+        {
+          "skill_name": "Tip strike [Mace]",
+          "description": "After landing an attack, use a bonus action to strike the creature's head, dealing 2 BL damage."
+        },
+        {
+          "skill_name": "Lunge [Rapier]",
+          "description": "As a bonus action during the movement phase, lunge 5ft forward, dealing 2 PR damage. You can still perform an attack and reaction."
+        },
+        {
+          "skill_name": "Dodge Strike [Falchion]",
+          "description": "Dodge left, right, or backwards 5ft, dealing 1d4 SL damage during the dodge."
+        }
+      ],
+      "languages": ["Native", "+ two of players choice"],
+      "minor_stats": {
+        "weapon_mastery": 2,
+        "intimidation": 1,
+        "leadership": 1
+      },
+      "micro_stats": []
+    },
+        "scholar": {
+          "magic": {
+            "catalystic": [
+              {
+                "spell_name": "Hardlight Bolt",
+                "description": "A bolt of light that strikes an opponent.",
+                "damage": "1d4 + Int",
+                "range": "40ft",
+                "duration": "4 Dur"
+              },
+              {
+                "spell_name": "Light Orb",
+                "description": "Create a dim light covering 20ft in a radius.",
+                "duration": "1 Dur"
+              },
+              {
+                "spell_name": "Screech",
+                "description": "Flick your wand creating a supersonic sound deafening those within 20ft who fail a Resistance check.",
+                "effect": "Save 12 Resistance",
+                "duration": "4 Dur"
+              }
+            ],
+            "runic": [
+              {
+                "spell_name": "Fire Rune",
+                "description": "Creates a small spark of flame that deals 1d4 fire damage in melee range.",
+                "damage": "1d4 fire",
+                "range": "Melee",
+                "cost": "2 Wil"
+              },
+              {
+                "spell_name": "Dark Rune",
+                "description": "Creates a small bead of darkness that attaches to the target in melee range and deals 2 dark damage for 2 turns.",
+                "damage": "2 dark per turn",
+                "duration": "2 turns",
+                "cost": "4 Wil"
+              },
+              {
+                "spell_name": "Force Rune",
+                "description": "Creates a small push of force, can unbalance opponents if they fail a Str save 12.",
+                "effect": "Unbalance, save 12 Str",
+                "cost": "2 Wil"
+              },
+              {
+                "spell_name": "Halt Rune",
+                "description": "Stops the momentum of small objects like arrows, bullets, or small thrown weapons. Can be casted as a reaction.",
+                "effect": "Stop small objects",
+                "cost": "2 Wil"
+              }
+            ]
+          },
+          "weaponry": [
+            {
+              "weapon_name": "Iron Topaz Wand",
+              "description": "A wand crafted with a topaz, used for casting spells.",
+              "durability": "20 DR"
+            },
+            {
+              "weapon_name": "Dagger",
+              "description": "A small, sharp blade used for close combat.",
+              "damage": "1d4 + Dex SL"
+            },
+            {
+              "weapon_name": "Mage Robe",
+              "description": "A simple robe worn by scholars for comfort and modest protection."
+            },
+            {
+              "weapon_name": "Simple Shirt, Pants, and Boots",
+              "description": "Basic clothing suitable for everyday wear."
+            }
+          ],
+          "equipment": [
+            {
+              "name": "Light Cloak",
+              "description": "A light cloak providing basic protection against the elements."
+            },
+            {
+              "name": "Satchel",
+              "description": "A small bag used to carry essential items."
+            },
+            {
+              "name": "Cell Watch",
+              "description": "A small, portable device for communication and timekeeping."
+            },
+            {
+              "name": "Portable Alchemy Set",
+              "description": "A set used to create potions and perform simple alchemical experiments."
+            },
+            {
+              "name": "250 GL",
+              "description": "250 Glint, the currency used for trade."
+            },
+            {
+              "name": "1 Precious Gem of Choice",
+              "description": "A valuable gem chosen by the player for future magical use."
+            },
+            {
+              "name": "Herbarium (Native)",
+              "description": "A guide to the flora native to the scholar's home planet."
+            },
+            {
+              "name": "Bestiary (Native)",
+              "description": "A book containing descriptions of native fauna."
+            },
+            {
+              "name": "Sketch Book",
+              "description": "A notebook for drawing or taking notes."
+            }
+          ],
+          "spells": [],
+          "skills": [
+            {
+              "skill_name": "Dodge Strike [Dagger]",
+              "description": "Dodge left, right, or backwards 5ft, dealing 1 SL during the dodge."
+            },
+            {
+              "skill_name": "Counter Candence",
+              "description": "If a creature uses an incantation spell, copy the spell by repeating it back at them. Requires Wil and an Int save.",
+              "effect": "Copy spell, Int save, Once per day"
+            }
+          ],
+          "languages": [
+            "Native",
+            "Madorian",
+            "Novorian",
+            "Lethiathan",
+            "Sahasl",
+            "+ 1 of player's choice"
+          ],
+          "minor_stats": {
+            "magical_knowledge": 3,
+            "history": 1
+          },
+          "micro_stats": []
+        },
+            "thief": {
+              "weaponry": [
+                {
+                  "weapon_name": "Dagger",
+                  "description": "A small, sharp blade used for close combat.",
+                  "weapon_damage": "1d4 + Dex SL"
+                },
+                {
+                  "weapon_name": "Hand Domesoka",
+                  "description": "Blades that extend from the tops of the fingers for quick, lethal strikes.",
+                  "weapon_damage": "1d4 + Dex * 2"
+                },
+                {
+                  "weapon_name": "Dark Shirt",
+                  "description": "A simple dark shirt for stealthy operations."
+                },
+                {
+                  "weapon_name": "Simple Pants and Boots",
+                  "description": "Basic clothing and footwear, ideal for light movement."
+                }
+              ],
+              "equipment": [
+                {
+                  "name": "Heavy Cloak",
+                  "description": "A thick cloak for concealment and protection from the elements."
+                },
+                {
+                  "name": "Lockpicks (15)",
+                  "description": "A set of 15 lockpicks, used for opening locked doors or chests discreetly."
+                },
+                {
+                  "name": "ICE Breakers (5)",
+                  "description": "Devices used to bypass security systems and electronic locks."
+                },
+                {
+                  "name": "Knoll Watch",
+                  "description": "A small device used for timekeeping and communication."
+                },
+                {
+                  "name": "Satchel",
+                  "description": "A small bag used to carry essential items."
+                },
+                {
+                  "name": "Jewelry (3 pieces)",
+                  "description": "Three pieces of valuable jewelry of the player's choice."
+                },
+                {
+                  "name": "Grappling Hook (50ft)",
+                  "description": "A long grappling hook used to scale walls or reach high places."
+                }
+              ],
+              "spells": [],
+              "skills": [
+                {
+                  "skill_name": "Soft Hands",
+                  "description": "Gain advantage during pickpocketing attempts. If you are pickpocketed, you will always notice."
+                },
+                {
+                  "skill_name": "Climber [Hand Domesoka]",
+                  "description": "Can climb vertical walls without rolling acrobatics."
+                },
+                {
+                  "skill_name": "Slippery",
+                  "description": "Can disappear into crowds without rolling stealth."
+                },
+                {
+                  "skill_name": "Knife Throw",
+                  "description": "Can throw knives and daggers, dealing an additional 1d4 SL damage."
+                },
+                {
+                  "skill_name": "Lock Cracker",
+                  "description": "Gain advantage while lockpicking."
+                },
+                {
+                  "skill_name": "Disarming Presence",
+                  "description": "You are less likely to be targeted during combat."
+                },
+                {
+                  "skill_name": "Fence Expert",
+                  "description": "You can sell stolen goods to any vendor."
+                },
+                {
+                  "skill_name": "Undercity Dweller",
+                  "description": "Gain +3 acrobatics and athletics bonuses while in undercities or slums."
+                },
+                {
+                  "skill_name": "Security Subterfuge",
+                  "description": "Can locate and disable traps and security systems after succeeding a perception save (DC 10)."
+                }
+              ],
+              "languages": [
+                "Native",
+                "Feign Speech",
+                "+ 2 of player's choice"
+              ],
+              "minor_stats": {
+                "stealth": 4,
+                "sleight_of_hand": 4,
+                "acrobatics": 2,
+                "bargaining": 2
+              },
+              "micro_stats": []
+            }
+          }
+          
+      
+  
