@@ -163,7 +163,7 @@ router.get("/:id/equipment", async (req, res) => {
   const characterId = req.params.id;
   try {
     const query = `
-      SELECT e.name, e.type, e.description
+      SELECT id, e.name, e.type, e.description
       FROM equipment e
       WHERE e.character_id = $1;
     `;
@@ -577,85 +577,85 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// ====== DELETE SPELLS FOR CHARACTER ======
-router.delete("/:id/spells", async (req, res) => {
-  const characterId = req.params.id;
+// ====== DELETE SPECIFIC SPELL BY SPELL ID ======
+router.delete("/:character_id/spells/:spell_id", async (req, res) => {
+  const { character_id, spell_id } = req.params;
   try {
     const result = await pool.query(
-      `DELETE FROM spells WHERE character_id = $1 RETURNING *`,
-      [characterId]
+      `DELETE FROM spells WHERE character_id = $1 AND id = $2 RETURNING *`,
+      [character_id, spell_id]
     );
 
     if (result.rows.length === 0) {
       return res
         .status(404)
-        .json({ message: "No spells found for this character" });
+        .json({ message: "Spell not found for this character" });
     }
 
-    res.status(200).json({ message: "Spells deleted successfully" });
+    res.status(200).json({ message: "Spell deleted successfully" });
   } catch (error) {
-    console.error("Error deleting spells:", error);
-    res.status(500).json({ message: "Error deleting spells" });
+    console.error("Error deleting spell:", error);
+    res.status(500).json({ message: "Error deleting spell" });
   }
 });
 
-// ====== DELETE WEAPONS FOR CHARACTER ======
-router.delete("/:id/weapons", async (req, res) => {
-  const characterId = req.params.id;
+// ====== DELETE SPECIFIC WEAPON BY WEAPON ID ======
+router.delete("/:character_id/weapons/:weapon_id", async (req, res) => {
+  const { character_id, weapon_id } = req.params;
   try {
     const result = await pool.query(
-      `DELETE FROM weapons WHERE character_id = $1 RETURNING *`,
-      [characterId]
+      `DELETE FROM weapons WHERE character_id = $1 AND id = $2 RETURNING *`,
+      [character_id, weapon_id]
     );
 
     if (result.rows.length === 0) {
       return res
         .status(404)
-        .json({ message: "No weapons found for this character" });
+        .json({ message: "Weapon not found for this character" });
     }
 
-    res.status(200).json({ message: "Weapons deleted successfully" });
+    res.status(200).json({ message: "Weapon deleted successfully" });
   } catch (error) {
-    console.error("Error deleting weapons:", error);
-    res.status(500).json({ message: "Error deleting weapons" });
+    console.error("Error deleting weapon:", error);
+    res.status(500).json({ message: "Error deleting weapon" });
   }
 });
 
-// ====== DELETE SKILLS FOR CHARACTER ======
-router.delete("/:id/skills", async (req, res) => {
-  const characterId = req.params.id;
+// ====== DELETE SPECIFIC SKILL BY SKILL ID ======
+router.delete("/:character_id/skills/:skill_id", async (req, res) => {
+  const { character_id, skill_id } = req.params;
   try {
     const result = await pool.query(
-      `DELETE FROM skills WHERE character_id = $1 RETURNING *`,
-      [characterId]
+      `DELETE FROM skills WHERE character_id = $1 AND id = $2 RETURNING *`,
+      [character_id, skill_id]
     );
 
     if (result.rows.length === 0) {
       return res
         .status(404)
-        .json({ message: "No skills found for this character" });
+        .json({ message: "Skill not found for this character" });
     }
 
-    res.status(200).json({ message: "Skills deleted successfully" });
+    res.status(200).json({ message: "Skill deleted successfully" });
   } catch (error) {
-    console.error("Error deleting skills:", error);
-    res.status(500).json({ message: "Error deleting skills" });
+    console.error("Error deleting skill:", error);
+    res.status(500).json({ message: "Error deleting skill" });
   }
 });
 
-// ====== DELETE EQUIPMENT FOR CHARACTER ======
-router.delete("/:id/equipment", async (req, res) => {
-  const characterId = req.params.id;
+// ====== DELETE SPECIFIC EQUIPMENT BY EQUIPMENT ID ======
+router.delete("/:character_id/equipment/:equipment_id", async (req, res) => {
+  const { character_id, equipment_id } = req.params;
   try {
     const result = await pool.query(
-      `DELETE FROM equipment WHERE character_id = $1 RETURNING *`,
-      [characterId]
+      `DELETE FROM equipment WHERE character_id = $1 AND id = $2 RETURNING *`,
+      [character_id, equipment_id]
     );
 
     if (result.rows.length === 0) {
       return res
         .status(404)
-        .json({ message: "No equipment found for this character" });
+        .json({ message: "Equipment not found for this character" });
     }
 
     res.status(200).json({ message: "Equipment deleted successfully" });
@@ -665,47 +665,47 @@ router.delete("/:id/equipment", async (req, res) => {
   }
 });
 
-// ====== DELETE LANGUAGES FOR CHARACTER ======
-router.delete("/:id/languages", async (req, res) => {
-  const characterId = req.params.id;
+// ====== DELETE SPECIFIC LANGUAGE BY LANGUAGE ID ======
+router.delete("/:character_id/languages/:language_id", async (req, res) => {
+  const { character_id, language_id } = req.params;
   try {
     const result = await pool.query(
-      `DELETE FROM languages WHERE character_id = $1 RETURNING *`,
-      [characterId]
+      `DELETE FROM languages WHERE character_id = $1 AND id = $2 RETURNING *`,
+      [character_id, language_id]
     );
 
     if (result.rows.length === 0) {
       return res
         .status(404)
-        .json({ message: "No languages found for this character" });
+        .json({ message: "Language not found for this character" });
     }
 
-    res.status(200).json({ message: "Languages deleted successfully" });
+    res.status(200).json({ message: "Language deleted successfully" });
   } catch (error) {
-    console.error("Error deleting languages:", error);
-    res.status(500).json({ message: "Error deleting languages" });
+    console.error("Error deleting language:", error);
+    res.status(500).json({ message: "Error deleting language" });
   }
 });
 
-// ====== DELETE MICRO STATS FOR CHARACTER ======
-router.delete("/:id/micro-stats", async (req, res) => {
-  const characterId = req.params.id;
+// ====== DELETE SPECIFIC MICRO STAT BY MICRO STAT ID ======
+router.delete("/:character_id/micro-stats/:micro_stat_id", async (req, res) => {
+  const { character_id, micro_stat_id } = req.params;
   try {
     const result = await pool.query(
-      `DELETE FROM micro_stats WHERE character_id = $1 RETURNING *`,
-      [characterId]
+      `DELETE FROM micro_stats WHERE character_id = $1 AND id = $2 RETURNING *`,
+      [character_id, micro_stat_id]
     );
 
     if (result.rows.length === 0) {
       return res
         .status(404)
-        .json({ message: "No micro stats found for this character" });
+        .json({ message: "Micro stat not found for this character" });
     }
 
-    res.status(200).json({ message: "Micro stats deleted successfully" });
+    res.status(200).json({ message: "Micro stat deleted successfully" });
   } catch (error) {
-    console.error("Error deleting micro stats:", error);
-    res.status(500).json({ message: "Error deleting micro stats" });
+    console.error("Error deleting micro stat:", error);
+    res.status(500).json({ message: "Error deleting micro stat" });
   }
 });
 
