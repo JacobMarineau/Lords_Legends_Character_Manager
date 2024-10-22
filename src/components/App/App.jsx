@@ -13,18 +13,21 @@ import Footer from '../Footer/Footer';
 
 import ProtectedRoute from '../ProtectedRoute/ProtectedRoute';
 
-import AboutPage from '../AboutPage/AboutPage';
 import UserPage from '../UserPage/UserPage';
 import InfoPage from '../InfoPage/InfoPage';
 import LandingPage from '../LandingPage/LandingPage';
 import LoginPage from '../LoginPage/LoginPage';
 import RegisterPage from '../RegisterPage/RegisterPage';
+import CharacterFormPart1 from '../CharacterForm/CharacterForm';
+import CharacterFormPart2 from '../CharacterForm/CharacterFormPart2';
+import CharacterFormPart3 from '../CharacterForm/CharacterFromPart3';
+import CharacterSummary from '../CharacterSummary/CharacterSummary';
 
 import './App.css';
 
 function App() {
   const dispatch = useDispatch();
-
+  const userId = useSelector((store) => store.user.id);
   const user = useSelector(store => store.user);
 
   useEffect(() => {
@@ -41,11 +44,28 @@ function App() {
 
           {/* Visiting localhost:5173/about will show the about page. */}
           <Route
-            // shows AboutPage at all times (logged in or not)
             exact
-            path="/about"
+            path="/characterstats1"
           >
-            <AboutPage />
+            <CharacterFormPart1 />
+          </Route>
+          <Route
+            exact
+            path="/characterstats2"
+          >
+            <CharacterFormPart2 />
+          </Route>
+          <Route
+            exact
+            path="/characterstats3"
+          >
+            <CharacterFormPart3 />
+          </Route>
+          <Route
+            exact
+            path={`/character-summary/${userId}`}
+          >
+            <CharacterSummary />
           </Route>
 
           {/* For protected routes, the view could show one of several things on the same route.

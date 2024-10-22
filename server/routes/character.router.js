@@ -7,6 +7,99 @@ const {
 const races = require("../data/races.json");
 const vocations = require("../data/vocations.json");
 
+// ====== ROUTER GET CHARACTERS BY USER ID ======
+router.get("/user/:user_id", async (req, res) => {
+  const userId = req.params.user_id;
+  try {
+    const query = `
+      SELECT
+        c.id AS character_id,
+        c.name AS character_name,
+        c.race,
+        c.vocation,
+        c.specialty,
+        c.max_hp,
+        c.current_hp,
+        c.focus_points,
+        c.soul_rank,
+        c.speed_class,
+        c.height,
+        c.age,
+        c.glint_pieces,
+        c.current_thp,
+        c.current_ar,
+        c.current_os,
+        c.current_mr,
+        c.innate_willpower,
+        c.extended_willpower,
+        c.strength,
+        c.dexterity,
+        c.intelligence,
+        c.charisma,
+        c.vitality,
+        c.arcana,
+        c.ferocity,
+        c.persuasion,
+        c.deception,
+        c.bargaining,
+        c.performance,
+        c.charm,
+        c.acrobatics,
+        c.athletics,
+        c.agility,
+        c.lifting,
+        c.sleight_of_hand,
+        c.stealth,
+        c.medicine,
+        c.weapon_mastery,
+        c.carving,
+        c.history,
+        c.wisdom,
+        c.science,
+        c.technology,
+        c.foraging,
+        c.endurance,
+        c.resistance,
+        c.feat_of_heroism,
+        c.leadership,
+        c.counter_charisma,
+        c.magical_knowledge,
+        c.intimidation,
+        c.magic_save_modifier,
+        c.physical_save_modifier,
+        -- Aggregated data from related tables
+        STRING_AGG(DISTINCT ms.stat_name || ': ' || COALESCE(ms.value::TEXT, 'N/A'), ', ') AS micro_stats,
+        STRING_AGG(DISTINCT lang.language_name, ', ') AS languages,
+        STRING_AGG(DISTINCT sp.spell_name || ' (' || COALESCE(sp.damage_die, 'N/A') || ', ' || COALESCE(sp.cost, 'N/A') || ', ' || COALESCE(sp.action_type, 'N/A') || ')', ', ') AS spells,
+        STRING_AGG(DISTINCT w.weapon_name || ' (' || COALESCE(w.damage_die, 'N/A') || ', ' || COALESCE(w.description, 'N/A') || ')', ', ') AS weapons,
+        STRING_AGG(DISTINCT eq.name || ' (' || COALESCE(eq.type, 'N/A') || ', ' || COALESCE(eq.description, 'N/A') || ')', ', ') AS equipment,
+        STRING_AGG(DISTINCT sk.skill_name || ' (' || COALESCE(sk.description, 'N/A') || ', ' || COALESCE(sk.action_type, 'N/A') || ', ' || COALESCE(sk.damage_die, 'N/A') || ', ' || COALESCE(sk.cost, 'N/A') || ')', ', ') AS skills
+      FROM characters c
+      LEFT JOIN micro_stats ms ON c.id = ms.character_id
+      LEFT JOIN languages lang ON c.id = lang.character_id
+      LEFT JOIN spells sp ON c.id = sp.character_id
+      LEFT JOIN weapons w ON c.id = w.character_id
+      LEFT JOIN equipment eq ON c.id = eq.character_id
+      LEFT JOIN skills sk ON c.id = sk.character_id
+      WHERE c.user_id = $1
+      GROUP BY c.id;
+    `;
+
+    const result = await pool.query(query, [userId]);
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No characters found for this user." });
+    }
+
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Error fetching characters for user:", error);
+    res.status(500).send("Error fetching characters");
+  }
+});
+
 // ====== ROUTER CHARACTER GET ======
 router.get("/", async (req, res) => {
   try {
@@ -270,6 +363,8 @@ router.post("/", rejectUnauthenticated, async (req, res) => {
     magic_save_modifier,
     physical_save_modifier,
   } = req.body;
+
+  console.log("Request Body:", req.body);
 
   const raceData = races[race.toLowerCase()];
   if (raceData) {

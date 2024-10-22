@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 
 function Nav() {
   const user = useSelector((store) => store.user);
-
+  const userId = useSelector((store) => store.user.id);
   return (
     <div className="nav">
       <Link to="/home">
@@ -36,9 +36,19 @@ function Nav() {
           </>
         )}
 
-        <Link className="navLink" to="/about">
-          About
+<Link className="navLink" to="/characterstats1">
+          Character Creator
         </Link>
+
+<Link className="navLink" to="/characterstats2">
+          Character Creator Part 2
+        </Link>
+        <Link className="navLink" to="/characterstats3">
+          Character Creator Part 3
+        </Link>
+        <Link className="navLink" to={`/character-summary/${userId}`}>
+      Characters
+    </Link>
       </div>
     </div>
   );
