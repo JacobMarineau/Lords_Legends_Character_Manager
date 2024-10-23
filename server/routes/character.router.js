@@ -672,29 +672,29 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// // ====== Update character stats
-// app.put("/api/characters/:id", async (req, res) => {
-//   const { id } = req.params;
-//   const {
-//     current_hp,
-//     current_ar,
-//     current_mr,
-//     focus_points,
-//     soul_rank,
-//     ...rest
-//   } = req.body;
+// ====== Update character stats
+router.put("/api/characters/:id", async (req, res) => {
+  const { id } = req.params;
+  const {
+    current_hp,
+    current_ar,
+    current_mr,
+    focus_points,
+    soul_rank,
+    ...rest
+  } = req.body;
 
-//   try {
-//     // Update only mutable stats in the database
-//     await pool.query(
-//       `UPDATE characters SET current_hp = $1, current_ar = $2, current_mr = $3, focus_points = $4, soul_rank = $5 WHERE id = $6`,
-//       [current_hp, current_ar, current_mr, focus_points, soul_rank, id]
-//     );
-//     res.status(200).send("Character updated successfully");
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// });
+  try {
+    // Update only mutable stats in the database
+    await pool.query(
+      `UPDATE characters SET current_hp = $1, current_ar = $2, current_mr = $3, focus_points = $4, soul_rank = $5 WHERE id = $6`,
+      [current_hp, current_ar, current_mr, focus_points, soul_rank, id]
+    );
+    res.status(200).send("Character updated successfully");
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // ====== DELETE SPECIFIC SPELL BY SPELL ID ======
 router.delete("/:character_id/spells/:spell_id", async (req, res) => {
