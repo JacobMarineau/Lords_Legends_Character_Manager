@@ -211,7 +211,16 @@
         "intimidation": 1,
         "leadership": 1
       },
-      "micro_stats": []
+      "micro_stats": [ 
+        {"micro_name": "Hand-and-a-half sword", "stat": null},
+        { "micro_name": "Flanged mace", "stat": null},
+      {"micro_name": "Buckler", "stat": null},
+     { "micro_name": "Buster", "stat": null},
+      {"micro_name": "Rapier", "stat": null},
+      {"micro_name": "Falchion", "stat": null},
+     { "micro_name": "Medium armor", "stat": null},
+      {"micro_name": "Hand-to-hand ", "stat": null}
+    ]
     },
         "scholar": {
           "magic": {

@@ -104,9 +104,6 @@ const CharacterFormPart3 = () => {
       
       console.log('Final character data being sent:', finalCharacterData);
       
-      
-  
-    console.log('Final character data being sent:', finalCharacterData);
   
     try {
       const response = await fetch('/api/characters', {
@@ -119,7 +116,7 @@ const CharacterFormPart3 = () => {
   
       if (response.ok) {
         console.log('Character created successfully');
-        history.push('/character-summary/${characterId}');
+        history.push(`/character-summary/${userId}`);
       } else {
         console.error('Error submitting character data');
       }
