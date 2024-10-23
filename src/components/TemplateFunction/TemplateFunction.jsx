@@ -1,20 +1,14 @@
-import React, { useState } from 'react';
-import {useSelector} from 'react-redux';
+import React from 'react';
+import { useSelector } from 'react-redux';
 
-// Basic functional component structure for React with default state
-// value setup. When making a new component be sure to replace the
-// component name TemplateFunction with the name for the new component.
-function TemplateFunction(props) {
-  // Using hooks we're creating local state for a "heading" variable with
-  // a default value of 'Functional Component'
-  const store = useSelector((store) => store);
-  const [heading, setHeading] = useState('Functional Component');
+const TestRedux = () => {
+  const userId = useSelector((state) => state.user?.id);
 
   return (
     <div>
-      <h2>{heading}</h2>
+      <h1>User ID: {userId || 'No User ID found'}</h1>
     </div>
   );
-}
+};
 
-export default TemplateFunction;
+export default TestRedux;

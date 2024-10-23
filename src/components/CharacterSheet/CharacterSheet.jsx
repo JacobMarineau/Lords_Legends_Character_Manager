@@ -1,112 +1,102 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom'; // to get the character ID from the URL
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 
 const CharacterSheet = () => {
-  const { id } = useParams(); 
-  const [character, setCharacter] = useState(null); 
-  const [editMode, setEditMode] = useState(false); 
+  const { characterId } = useParams(); // Get characterId from URL
+  const [character, setCharacter] = useState(null);
+  const [newWeapon, setNewWeapon] = useState({ weapon_name: '', damage_die: '', description: '' });
+  const [updatedName, setUpdatedName] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Fetch character data on component load
     const fetchCharacter = async () => {
       try {
-        const res = await axios.get(`/api/characters/${id}`);
+        const res = await axios.get(`/api/characters/${characterId}`);
         setCharacter(res.data);
+        setUpdatedName(res.data.character_name); // Initialize name for editing
+        setLoading(false);
       } catch (err) {
-        console.error(err);
+        setError(err.message);
+        setLoading(false);
       }
     };
-    fetchCharacter();
-  }, [id]);
 
-  const handleInputChange = (e) => {
+    fetchCharacter();
+  }, [characterId]);
+
+  const handleNameChange = (e) => {
+    setUpdatedName(e.target.value);
+  };
+
+  const saveName = async () => {
+    try {
+      await axios.put(`/api/characters/${characterId}`, { name: updatedName });
+      alert('Character name updated successfully!');
+    } catch (err) {
+      alert('Failed to update character name.');
+    }
+  };
+
+  const handleWeaponChange = (e) => {
     const { name, value } = e.target;
-    setCharacter((prevCharacter) => ({
-      ...prevCharacter,
+    setNewWeapon((prevWeapon) => ({
+      ...prevWeapon,
       [name]: value,
     }));
   };
 
-  const saveChanges = async () => {
+  const addWeapon = async () => {
     try {
-      await axios.put(`/api/characters/${id}`, character); // Send updated character data to backend
-      alert('Character updated successfully!');
+      await axios.post(`/api/characters/${characterId}/weapons`, newWeapon);
+      alert('Weapon added successfully!');
+      setNewWeapon({ weapon_name: '', damage_die: '', description: '' }); // Clear form after submission
     } catch (err) {
-      console.error(err);
-      alert('Failed to update character.');
+      alert('Failed to add weapon.');
     }
   };
 
-  if (!character) return <div>Loading...</div>;
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="container">
-      <h1>Character Sheet: {character.name}</h1>
+    <div>
+      <h1>{character.name}'s Character Sheet</h1>
 
-      {/* Display read-only info for immutable fields */}
+      {/* Section to edit character name */}
       <div>
-        <strong>Name:</strong> {character.name}
+        <label>Character Name:</label>
+        <input type="text" value={updatedName} onChange={handleNameChange} />
+        <button onClick={saveName}>Save Name</button>
       </div>
+
+      {/* Form to add a new weapon */}
       <div>
-        <strong>Race:</strong> {character.race}
-      </div>
-      <div>
-        <strong>Vocation:</strong> {character.vocation}
-      </div>
-      <div>
-        <strong>Age:</strong> {character.age}
-      </div>
-      <div>
-        <strong>Height:</strong> {character.height}
-      </div>
-
-      {/* Editable fields */}
-      <div className="editable-fields">
-        <label>Current HP</label>
+        <h2>Add a Weapon</h2>
+        <label>Weapon Name:</label>
         <input
-          type="number"
-          name="current_hp"
-          value={character.current_hp}
-          onChange={handleInputChange}
+          type="text"
+          name="weapon_name"
+          value={newWeapon.weapon_name}
+          onChange={handleWeaponChange}
         />
-
-        <label>Current Armor Rating</label>
+        <label>Damage Die:</label>
         <input
-          type="number"
-          name="current_ar"
-          value={character.current_ar}
-          onChange={handleInputChange}
+          type="text"
+          name="damage_die"
+          value={newWeapon.damage_die}
+          onChange={handleWeaponChange}
         />
-
-        <label>Focus Points</label>
+        <label>Description:</label>
         <input
-          type="number"
-          name="focus_points"
-          value={character.focus_points}
-          onChange={handleInputChange}
+          type="text"
+          name="description"
+          value={newWeapon.description}
+          onChange={handleWeaponChange}
         />
-
-        <label>Soul Rank</label>
-        <input
-          type="number"
-          name="soul_rank"
-          value={character.soul_rank}
-          onChange={handleInputChange}
-        />
-
-        <label>Glint Pieces</label>
-        <input
-          type="number"
-          name="glint_pieces"
-          value={character.glint_pieces}
-          onChange={handleInputChange}
-        />
-
-        {/* Add more fields as needed */}
+        <button onClick={addWeapon}>Add Weapon</button>
       </div>
-
-      <button onClick={saveChanges}>Save Changes</button>
     </div>
   );
 };

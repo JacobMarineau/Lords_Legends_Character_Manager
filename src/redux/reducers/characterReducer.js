@@ -4,6 +4,7 @@ import {
   SAVE_CHARACTER_PART3,
   UPDATE_RACE_AND_VOCATION,
   RESET_CHARACTER_CREATION,
+  SET_SELECTED_CHARACTER,
 } from "../actions/characterActions";
 
 const initialState = {
@@ -12,6 +13,7 @@ const initialState = {
   part3: {}, // Third form data
   race: "",
   vocation: "",
+  selectedCharacterId: null,
 };
 
 const characterReducer = (state = initialState, action) => {
@@ -45,6 +47,11 @@ const characterReducer = (state = initialState, action) => {
       };
     case RESET_CHARACTER_CREATION: // Reset
       return initialState;
+    case SET_SELECTED_CHARACTER:
+      return {
+        ...state,
+        selectedCharacterId: action.payload,
+      };
     default:
       return state;
   }

@@ -170,13 +170,13 @@ router.get("/:id", async (req, res) => {
           c.counter_charisma,
           c.magical_knowledge,
           c.intimidation,
-          -- Handle NULL fields by providing 'N/A' for missing values
-          STRING_AGG(DISTINCT ms.stat_name || ': ' || COALESCE(ms.value::TEXT, 'N/A'), ', ') AS micro_stats,
-          STRING_AGG(DISTINCT lang.language_name, ', ') AS languages,
-          STRING_AGG(DISTINCT sp.spell_name || ' (' || COALESCE(sp.damage_die, 'N/A') || ', ' || COALESCE(sp.cost, 'N/A') || ', ' || COALESCE(sp.action_type, 'N/A') || ')', ', ') AS spells,
-          STRING_AGG(DISTINCT w.weapon_name || ' (' || COALESCE(w.damage_die, 'N/A') || ', ' || COALESCE(w.description, 'N/A') || ')', ', ') AS weapons,
-          STRING_AGG(DISTINCT eq.name || ' (' || COALESCE(eq.type, 'N/A') || ', ' || COALESCE(eq.description, 'N/A') || ')', ', ') AS equipment,
-          STRING_AGG(DISTINCT sk.skill_name || ' (' || COALESCE(sk.description, 'N/A') || ', ' || COALESCE(sk.action_type, 'N/A') || ', ' || COALESCE(sk.damage_die, 'N/A') || ', ' || COALESCE(sk.cost, 'N/A') || ')', ', ') AS skills
+          -- Use JSON_AGG to return these as JSON arrays
+          JSON_AGG(DISTINCT jsonb_build_object('stat_name', ms.stat_name, 'value', COALESCE(ms.value, 0))) AS micro_stats,
+          JSON_AGG(DISTINCT lang.language_name) AS languages,
+          JSON_AGG(DISTINCT jsonb_build_object('spell_name', sp.spell_name, 'damage_die', sp.damage_die, 'cost', sp.cost, 'action_type', sp.action_type)) AS spells,
+          JSON_AGG(DISTINCT jsonb_build_object('weapon_name', w.weapon_name, 'damage_die', w.damage_die, 'description', w.description)) AS weapons,
+          JSON_AGG(DISTINCT jsonb_build_object('name', eq.name, 'type', eq.type, 'description', eq.description)) AS equipment,
+          JSON_AGG(DISTINCT jsonb_build_object('skill_name', sk.skill_name, 'description', sk.description, 'action_type', sk.action_type, 'damage_die', sk.damage_die, 'cost', sk.cost)) AS skills
       FROM characters c
       LEFT JOIN micro_stats ms ON c.id = ms.character_id
       LEFT JOIN languages lang ON c.id = lang.character_id
@@ -603,6 +603,62 @@ router.post("/", rejectUnauthenticated, async (req, res) => {
   }
 });
 
+// ====== ROUTER CHARACTER:ID ADD WEAPON ======
+router.post("/:character_id/weapons", async (req, res) => {
+  const { character_id } = req.params;
+  const { weapon_name, damage_die, description } = req.body;
+
+  try {
+    const query = `
+      INSERT INTO weapons (character_id, weapon_name, damage_die, description)
+      VALUES ($1, $2, $3, $4) RETURNING *;
+    `;
+    const result = await pool.query(query, [
+      character_id,
+      weapon_name,
+      damage_die,
+      description,
+    ]);
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error adding weapon:", error);
+    res.status(500).json({ error: "Failed to add weapon" });
+  }
+});
+
+// ====== ROUTER CHARACTER:ID PUT ======
+router.put("/:id", async (req, res) => {
+  const characterId = req.params.id;
+  const { name, max_hp, current_hp, focus_points } = req.body; // Add any other fields you want to update
+
+  try {
+    const query = `
+      UPDATE characters
+      SET name = $1, max_hp = $2, current_hp = $3, focus_points = $4
+      WHERE id = $5
+      RETURNING *;
+    `;
+
+    const result = await pool.query(query, [
+      name,
+      max_hp,
+      current_hp,
+      focus_points,
+      characterId,
+    ]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Character not found" });
+    }
+
+    res.status(200).json(result.rows[0]); // Return the updated character
+  } catch (error) {
+    console.error("Error updating character:", error);
+    res.status(500).json({ message: "Error updating character" });
+  }
+});
+
 // ===============
 // === DELETES ===
 // ===============
@@ -672,7 +728,7 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// ====== Update character stats
+// ====== Update character stats ======
 router.put("/api/characters/:id", async (req, res) => {
   const { id } = req.params;
   const {

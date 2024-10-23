@@ -1,15 +1,19 @@
 /** @jsxImportSource @emotion/react */
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector, useDispatch  } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 import { css } from '@emotion/react';
 import { Row, Col, Button, Spinner, Alert } from 'react-bootstrap';
 import { useTheme } from '@emotion/react';
+import { setSelectedCharacter } from '../../redux/actions/characterActions';
 
 const CharacterSummary = () => {
   const [characters, setCharacters] = useState([]);
   const [error, setError] = useState(null);
   const userId = useSelector((store) => store.user.id);
   const theme = useTheme();
+  const history = useHistory();
+   
 
   // Container for the whole page
   const containerStyle = css`
@@ -118,6 +122,13 @@ const CharacterSummary = () => {
     }
   };
 
+  const dispatch = useDispatch();
+  
+  const handleViewCharacter = (characterId) => {
+    dispatch(setSelectedCharacter(characterId)); 
+    history.push(`/character-sheet/${characterId}`);
+  }
+
   const renderCharacterDetails = (character) => {
     return Object.entries(character).map(([key, value]) => {
       if (Array.isArray(value)) {
@@ -178,6 +189,9 @@ const CharacterSummary = () => {
               >
                 Delete Character
               </Button>
+              <Button onClick={() => handleViewCharacter(character.character_id)}>
+            View Character Sheet
+          </Button>
             </Col>
           </Row>
         </div>

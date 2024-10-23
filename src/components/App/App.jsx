@@ -22,6 +22,8 @@ import CharacterFormPart1 from '../CharacterForm/CharacterForm';
 import CharacterFormPart2 from '../CharacterForm/CharacterFormPart2';
 import CharacterFormPart3 from '../CharacterForm/CharacterFromPart3';
 import CharacterSummary from '../CharacterSummary/CharacterSummary';
+import CharacterSheet from '../CharacterSheet/CharacterSheet';
+import TemplateFunction from '../TemplateFunction/TemplateFunction'
 
 import './App.css';
 
@@ -66,6 +68,14 @@ function App() {
             path={`/character-summary/${userId}`}
           >
             <CharacterSummary />
+            <TemplateFunction />
+          </Route>
+  
+  <Route
+            exact
+            path="/character-sheet/:characterId"
+          >
+           <CharacterSheet />
           </Route>
 
           {/* For protected routes, the view could show one of several things on the same route.
