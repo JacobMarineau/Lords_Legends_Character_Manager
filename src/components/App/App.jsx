@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import {
-  HashRouter as Router,
+  HashRouter as Router, // Ensure Router wraps the entire component tree
   Redirect,
   Route,
   Switch,
@@ -10,9 +10,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import Nav from '../Nav/Nav';
 import Footer from '../Footer/Footer';
-
 import ProtectedRoute from '../ProtectedRoute/ProtectedRoute';
-
 import UserPage from '../UserPage/UserPage';
 import InfoPage from '../InfoPage/InfoPage';
 import LandingPage from '../LandingPage/LandingPage';
@@ -23,13 +21,11 @@ import CharacterFormPart2 from '../CharacterForm/CharacterFormPart2';
 import CharacterFormPart3 from '../CharacterForm/CharacterFromPart3';
 import CharacterSummary from '../CharacterSummary/CharacterSummary';
 import CharacterSheet from '../CharacterSheet/CharacterSheet';
-import TemplateFunction from '../TemplateFunction/TemplateFunction'
-
+import TemplateFunction from '../TemplateFunction/TemplateFunction';
 import './App.css';
 
 function App() {
   const dispatch = useDispatch();
-  const userId = useSelector((store) => store.user.id);
   const user = useSelector(store => store.user);
 
   useEffect(() => {
@@ -37,110 +33,27 @@ function App() {
   }, [dispatch]);
 
   return (
-    <Router>
+    <Router> 
       <div>
         <Nav />
         <Switch>
-          {/* Visiting localhost:5173 will redirect to localhost:5173/home */}
           <Redirect exact from="/" to="/home" />
-
-          {/* Visiting localhost:5173/about will show the about page. */}
-          <Route
-            exact
-            path="/characterstats1"
-          >
-            <CharacterFormPart1 />
+          <Route exact path="/characterstats1" component={CharacterFormPart1} />
+          <Route exact path="/characterstats2" component={CharacterFormPart2} />
+          <Route exact path="/characterstats3" component={CharacterFormPart3} />
+          <Route exact path="/character-summary/:userId" component={CharacterSummary} />
+          <Route exact path="/character-sheet/:characterId" component={CharacterSheet} />
+          <ProtectedRoute exact path="/user" component={UserPage} />
+          <ProtectedRoute exact path="/info" component={InfoPage} />
+          <Route exact path="/login">
+            {user.id ? <Redirect to="/user" /> : <LoginPage />}
           </Route>
-          <Route
-            exact
-            path="/characterstats2"
-          >
-            <CharacterFormPart2 />
+          <Route exact path="/registration">
+            {user.id ? <Redirect to="/user" /> : <RegisterPage />}
           </Route>
-          <Route
-            exact
-            path="/characterstats3"
-          >
-            <CharacterFormPart3 />
+          <Route exact path="/home">
+            {user.id ? <Redirect to="/user" /> : <LandingPage />}
           </Route>
-          <Route
-            exact
-            path={`/character-summary/${userId}`}
-          >
-            <CharacterSummary />
-            <TemplateFunction />
-          </Route>
-  
-  <Route
-            exact
-            path="/character-sheet/:characterId"
-          >
-           <CharacterSheet />
-          </Route>
-
-          {/* For protected routes, the view could show one of several things on the same route.
-            Visiting localhost:5173/user will show the UserPage if the user is logged in.
-            If the user is not logged in, the ProtectedRoute will show the LoginPage (component).
-            Even though it seems like they are different pages, the user is always on localhost:5173/user */}
-          <ProtectedRoute
-            // logged in shows UserPage else shows LoginPage
-            exact
-            path="/user"
-          >
-            <UserPage />
-          </ProtectedRoute>
-
-          <ProtectedRoute
-            // logged in shows InfoPage else shows LoginPage
-            exact
-            path="/info"
-          >
-            <InfoPage />
-          </ProtectedRoute>
-
-          <Route
-            exact
-            path="/login"
-          >
-            {user.id ?
-              // If the user is already logged in, 
-              // redirect to the /user page
-              <Redirect to="/user" />
-              :
-              // Otherwise, show the login page
-              <LoginPage />
-            }
-          </Route>
-
-          <Route
-            exact
-            path="/registration"
-          >
-            {user.id ?
-              // If the user is already logged in, 
-              // redirect them to the /user page
-              <Redirect to="/user" />
-              :
-              // Otherwise, show the registration page
-              <RegisterPage />
-            }
-          </Route>
-
-          <Route
-            exact
-            path="/home"
-          >
-            {user.id ?
-              // If the user is already logged in, 
-              // redirect them to the /user page
-              <Redirect to="/user" />
-              :
-              // Otherwise, show the Landing page
-              <LandingPage />
-            }
-          </Route>
-
-          {/* If none of the other routes matched, we will show a 404. */}
           <Route>
             <h1>404</h1>
           </Route>

@@ -5,7 +5,7 @@ import { css } from '@emotion/react';
 import { useTheme } from '@emotion/react';
 import { useHistory } from 'react-router-dom';
 
-const CharacterFormPart3 = () => {
+const CharacterFormPart3 = ({ userId }) => {
   const theme = useTheme();
   const history = useHistory();
 

@@ -1,13 +1,29 @@
+/** @jsxImportSource @emotion/react */
 import React from 'react';
-import './Footer.css';
-
-// This is one of our simplest components
-// It doesn't have local state, so it can be a function component.
-// It doesn't dispatch any redux actions or display any part of redux state
-// or even care what the redux state is, so it doesn't need 'connect()'
+import { css } from '@emotion/react';
+import { theme } from '../../theme/theme';
 
 function Footer() {
-  return <footer>&copy; Prime Digital Academy</footer>;
+  // Footer container styling
+  const footerStyle = css`
+    background-color: ${theme.colors.baseColor2};
+    color: ${theme.colors.offWhiteBackground};
+    text-align: center;
+    padding: ${theme.spacing.medium} 0;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    box-shadow: 0px -2px 10px rgba(0, 0, 0, 0.1);
+    font-family: ${theme.fonts.body};
+    font-size: ${theme.typography.sizes.small};
+  `;
+
+  return (
+    <footer css={footerStyle}>
+      &copy; {new Date().getFullYear()} Lords and Legends | Prime Digital Academy
+    </footer>
+  );
 }
 
 export default Footer;
+

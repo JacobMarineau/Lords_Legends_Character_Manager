@@ -26,8 +26,9 @@ function Nav({ characterId }) {
   const secondaryNavStyle = css`
     background-color: ${theme.colors.baseColor2};
     padding: ${theme.spacing.small};
+    
     display: flex;
-    justify-content: space-around;
+    justify-content: flex-start;
     margin-top: ${theme.spacing.small};
   `;
 
@@ -49,6 +50,7 @@ function Nav({ characterId }) {
   // Link Styling for Secondary Nav
   const linkStyleSecondary = css`
     color: ${theme.colors.offWhiteBackground};
+    padding: ${theme.spacing.small};
     text-decoration: none;
     font-size: ${theme.typography.sizes.normal};
     &:hover {
@@ -61,7 +63,7 @@ function Nav({ characterId }) {
       {/* Primary Nav */}
       <div css={primaryNavStyle}>
         {/* Space for logo */}
-        <h2 className="nav-title" css={linkStylePrimary}>Prime Solo Project</h2>
+        <h2 className="nav-title" css={linkStylePrimary}>LORDS & LEGENDS</h2>
 
         {user.id && (
           <>
@@ -77,10 +79,7 @@ function Nav({ characterId }) {
       {user.id && (
         <div css={secondaryNavStyle}>
           <Link css={linkStyleSecondary} to="/characterstats1">Character Creator</Link>
-          <Link css={linkStyleSecondary} to="/characterstats2">Character Creator Part 2</Link>
-          <Link css={linkStyleSecondary} to="/characterstats3">Character Creator Part 3</Link>
           <Link css={linkStyleSecondary} to={`/character-summary/${userId}`}>Characters</Link>
-          <Link css={linkStyleSecondary} to={`/character-sheet/${characterId}`}>Char Sheet</Link>
         </div>
       )}
     </>
