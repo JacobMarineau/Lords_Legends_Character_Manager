@@ -223,33 +223,29 @@
     ]
     },
         "scholar": {
-          "magic": {
-            "catalystic": [
+          "spells": 
+             [
               {
                 "spell_name": "Hardlight Bolt",
                 "description": "A bolt of light that strikes an opponent.",
                 "damage": "1d4 + Int",
-                "range": "40ft",
-                "duration": "4 Dur"
+                "cost": "1 Dur"
               },
               {
                 "spell_name": "Light Orb",
                 "description": "Create a dim light covering 20ft in a radius.",
-                "duration": "1 Dur"
+                "cost": "2 Dur"
               },
               {
                 "spell_name": "Screech",
                 "description": "Flick your wand creating a supersonic sound deafening those within 20ft who fail a Resistance check.",
                 "effect": "Save 12 Resistance",
-                "duration": "4 Dur"
-              }
-            ],
-            "runic": [
+                "cost": "4 Dur"
+              },
               {
                 "spell_name": "Fire Rune",
                 "description": "Creates a small spark of flame that deals 1d4 fire damage in melee range.",
                 "damage": "1d4 fire",
-                "range": "Melee",
                 "cost": "2 Wil"
               },
               {
@@ -271,13 +267,12 @@
                 "effect": "Stop small objects",
                 "cost": "2 Wil"
               }
-            ]
-          },
+            ],
           "weaponry": [
             {
               "weapon_name": "Iron Topaz Wand",
               "description": "A wand crafted with a topaz, used for casting spells.",
-              "durability": "20 DR"
+              "damage": "20 DR"
             },
             {
               "weapon_name": "Dagger",
@@ -331,7 +326,6 @@
               "description": "A notebook for drawing or taking notes."
             }
           ],
-          "spells": [],
           "skills": [
             {
               "skill_name": "Dodge Strike [Dagger]",
@@ -356,7 +350,7 @@
             "history": 1
           },
           "micro_stats": []
-        },
+},
             "thief": {
               "weaponry": [
                 {

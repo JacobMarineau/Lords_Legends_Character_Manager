@@ -12,6 +12,19 @@
           "description": "Wisdom can be used in place of a general Charisma check"
         }
       ]
+    },
+    "madorian": {
+      "modifiers": {
+        "strength": 2,
+        "dexterity": 2,
+        "intelligence": -1
+      },
+      "passives": [
+        {
+          "skill_name": "Madorian presence",
+          "description": "Leadership checks low cap at 10"
+        }
+      ]
     }
   }
   
