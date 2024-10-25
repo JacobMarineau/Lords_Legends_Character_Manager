@@ -1,3 +1,4 @@
+/** @jsxImportSource @emotion/react */
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { Row, Col, Button } from 'react-bootstrap';
@@ -10,13 +11,51 @@ const CharacterFormPart3 = ({ userId }) => {
   const history = useHistory();
 
   const formStyle = css`
-    margin-top: 20px;
-    background: ${theme.colors.baseColor2};
-    padding: 20px;
+    background: ${theme.colors.baseColor};
+    padding: ${theme.spacing.large};
     border-radius: 12px;
     box-shadow: 0px 4px 10px ${theme.colors.boxShadow};
     color: ${theme.colors.offWhiteBackground};
+    max-width: 1200px;
+    margin: 0 auto;
+    margin-top: ${theme.spacing.large};
   `;
+
+  const cardStyle = css`
+    background: ${theme.colors.baseColor2}; 
+    padding: ${theme.spacing.medium};
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px ${theme.colors.boxShadow};
+    margin-bottom: ${theme.spacing.large};
+  `;
+
+  const headerStyle = css`
+    color: ${theme.colors.trim};
+    font-size: ${theme.typography.sizes.large};
+    font-weight: ${theme.typography.weights.bold};
+    margin-bottom: ${theme.spacing.medium};
+  `;
+
+  const buttonStyle = css`
+    background-color: ${theme.colors.baseColor};
+    border-color: ${theme.colors.baseColor};
+    margin-top: ${theme.spacing.large};
+    padding: ${theme.spacing.small} ${theme.spacing.medium};
+    font-size: ${theme.typography.sizes.large};
+    &:hover {
+      background-color: ${theme.colors.baseColor2};
+      border-color: ${theme.colors.baseColor2};
+    }
+  `;
+
+  const charismaTitleStyle = css`color: ${theme.colors.charismaGroup};`;
+  const strengthTitleStyle = css`color: ${theme.colors.strengthGroup};`;
+  const dexterityTitleStyle = css`color: ${theme.colors.dexterityGroup};`;
+  const intelligenceTitleStyle = css`color: ${theme.colors.intelligenceGroup};`;
+  const vitalityTitleStyle = css`color: ${theme.colors.vitalityGroup};`;
+  const willpowerTitleStyle = css`color: ${theme.colors.willpowerGroup};`;
+  const arcanaTitleStyle = css`color: ${theme.colors.arcanaGroup};`;
+  const ferocityTitleStyle = css`color: ${theme.colors.ferocityGroup};`;
 
   const { part1, part2, race, vocation } = useSelector((state) => state.character);
 
@@ -30,13 +69,10 @@ const CharacterFormPart3 = ({ userId }) => {
   const formData = {
     ...part1,
     ...part2,
-    race: race,      
-    vocation: vocation,
+    race: race || '',
+    vocation: vocation || '',
   };
 
-  console.log("Form Data being submitted:", formData);
-
-  // Function to handle final submission
   const handleSubmit = async () => {
     
     // Build the final character object to match the backend structure
@@ -94,12 +130,6 @@ const CharacterFormPart3 = ({ userId }) => {
         intimidation: formData.intimidation || 0,
         magic_save_modifier: formData.magic_save_modifier || 0,
         physical_save_modifier: formData.physical_save_modifier || 0,
-        // micro_stats: formData.vocation.micro_stats || [],
-        // languages: formData.vocation.languages || [],
-        // spells: formData.vocation.spells || [],  
-        // weapons: formData.vocation.weaponry || [], 
-        // equipment: formData.vocation.equipment || [], 
-        // skills: formData.vocation.skills || [],
       };
       
       console.log('Final character data being sent:', finalCharacterData);
@@ -125,58 +155,88 @@ const CharacterFormPart3 = ({ userId }) => {
     }
   };
   
+
   return (
     <div css={formStyle}>
-      <h3>Review Your Character</h3>
-      <Row>
-        <Col>
-          <h4>Basic Information</h4>
-          <p><strong>Name:</strong> {characterData.name}</p>
-          <p><strong>Race:</strong> {characterData.race.name || 'N/A'}</p>  
-          <p><strong>Vocation:</strong> {characterData.vocation.name || 'N/A'}</p>  
-          <p><strong>Specialty:</strong> {characterData.specialty}</p>
-        </Col>
-      </Row>
+      <h3 css={headerStyle}>Review Your Character</h3>
+      
+      <div css={cardStyle}>
+        <h4 css={headerStyle}>Basic Information</h4>
+        <p><strong>Name:</strong> {characterData.name}</p>
+        <p><strong>Race:</strong> {characterData.race.name || 'N/A'}</p>  
+        <p><strong>Vocation:</strong> {characterData.vocation.name || 'N/A'}</p>  
+        <p><strong>Specialty:</strong> {characterData.specialty}</p>
+      </div>
 
-      <Row>
-        <Col>
-          <h4>Health & Stats</h4>
-          <p><strong>Max HP:</strong> {characterData.max_hp}</p>
-          <p><strong>Current HP:</strong> {characterData.current_hp}</p>
-          <p><strong>Focus Points:</strong> {characterData.focus_points}</p>
-          <p><strong>Soul Rank:</strong> {characterData.soul_rank}</p>
-          <p><strong>Speed Class:</strong> {characterData.speed_class}</p>
-        </Col>
-      </Row>
+      <div css={cardStyle}>
+        <h4 css={headerStyle}>Health & Stats</h4>
+        <p><strong>Max HP:</strong> {characterData.max_hp}</p>
+        <p><strong>Current HP:</strong> {characterData.current_hp}</p>
+        <p><strong>Focus Points:</strong> {characterData.focus_points}</p>
+        <p><strong>Soul Rank:</strong> {characterData.soul_rank}</p>
+        <p><strong>Speed Class:</strong> {characterData.speed_class}</p>
+      </div>
 
-      <Row>
-        <Col>
-          <h4>Major Stats</h4>
-          <p><strong>Strength:</strong> {characterData.strength}</p>
-          <p><strong>Dexterity:</strong> {characterData.dexterity}</p>
-          <p><strong>Intelligence:</strong> {characterData.intelligence}</p>
-          <p><strong>Charisma:</strong> {characterData.charisma}</p>
-          <p><strong>Vitality:</strong> {characterData.vitality}</p>
-          <p><strong>Willpower:</strong> {characterData.willpower}</p>
-          <p><strong>Arcana:</strong> {characterData.arcana}</p>
-          <p><strong>Ferocity:</strong> {characterData.ferocity}</p>
-        </Col>
-      </Row>
+      <div css={cardStyle}>
+        <h4 css={headerStyle}>Major Stats</h4>
+        <p><strong>Strength:</strong> {characterData.strength}</p>
+        <p><strong>Dexterity:</strong> {characterData.dexterity}</p>
+        <p><strong>Intelligence:</strong> {characterData.intelligence}</p>
+        <p><strong>Charisma:</strong> {characterData.charisma}</p>
+        <p><strong>Vitality:</strong> {characterData.vitality}</p>
+        <p><strong>Willpower:</strong> {characterData.willpower}</p>
+        <p><strong>Arcana:</strong> {characterData.arcana}</p>
+        <p><strong>Ferocity:</strong> {characterData.ferocity}</p>
+      </div>
 
-      <Row>
-        <Col>
-          <h4>Minor Stats (Grouped by Major)</h4>
-          <p><strong>Persuasion:</strong> {characterData.persuasion}</p>
-          <p><strong>Deception:</strong> {characterData.deception}</p>
-          <p><strong>Bargaining:</strong> {characterData.bargaining}</p>
-          <p><strong>Performance:</strong> {characterData.performance}</p>
-          <p><strong>Acrobatics:</strong> {characterData.acrobatics}</p>
-          <p><strong>Athletics:</strong> {characterData.athletics}</p>
-        </Col>
-      </Row>
+      <div css={cardStyle}>
+        <h4 css={headerStyle}>Minor Stats (Grouped by Major)</h4>
+        <h5 css={charismaTitleStyle}><strong>Charisma Minor Stats</strong></h5>
+        <p><strong>Persuasion:</strong> {characterData.persuasion}</p>
+        <p><strong>Deception:</strong> {characterData.deception}</p>
+        <p><strong>Bargaining:</strong> {characterData.bargaining}</p>
+        <p><strong>Performance:</strong> {characterData.performance}</p>
+        <p><strong>Charm:</strong> {characterData.charm}</p>
 
+        <h5 css={strengthTitleStyle}><strong>Strength Minor Stats</strong></h5>
+        <p><strong>Acrobatics:</strong> {characterData.acrobatics}</p>
+        <p><strong>Athletics:</strong> {characterData.athletics}</p>
+        <p><strong>Agility:</strong> {characterData.agility}</p>
+        <p><strong>Lifting:</strong> {characterData.lifting}</p>
 
-      <Button variant="primary" onClick={handleSubmit}>
+        <h5 css={dexterityTitleStyle}><strong>Dexterity Minor Stats</strong></h5>
+        <p><strong>Sleight of Hand:</strong> {characterData.sleight_of_hand}</p>
+        <p><strong>Stealth:</strong> {characterData.stealth}</p>
+        <p><strong>Medicine:</strong> {characterData.medicine}</p>
+        <p><strong>Weapon Mastery:</strong> {characterData.weapon_mastery}</p>
+        <p><strong>Carving:</strong> {characterData.carving}</p>
+
+        <h5 css={intelligenceTitleStyle}><strong>Intelligence Minor Stats</strong></h5>
+        <p><strong>History:</strong> {characterData.history}</p>
+        <p><strong>Wisdom:</strong> {characterData.wisdom}</p>
+        <p><strong>Science:</strong> {characterData.science}</p>
+        <p><strong>Technology:</strong> {characterData.technology}</p>
+        <p><strong>Foraging:</strong> {characterData.foraging}</p>
+
+        <h5 css={vitalityTitleStyle}><strong>Vitality Minor Stats</strong></h5>
+        <p><strong>Endurance:</strong> {characterData.endurance}</p>
+        <p><strong>Resistance:</strong> {characterData.resistance}</p>
+
+        <h5 css={willpowerTitleStyle}><strong>Willpower Minor Stats</strong></h5>
+        <p><strong>Feat of Heroism:</strong> {characterData.feat_of_heroism}</p>
+        <p><strong>Leadership:</strong> {characterData.leadership}</p>
+        <p><strong>Counter Charisma:</strong> {characterData.counter_charisma}</p>
+
+        <h5 css={arcanaTitleStyle}><strong>Arcana Minor Stats</strong></h5>
+        <p><strong>Magical Knowledge:</strong> {characterData.magical_knowledge}</p>
+        <p><strong>Magic Save Modifier:</strong> {characterData.magic_save_modifier}</p>
+
+        <h5 css={ferocityTitleStyle}><strong>Ferocity Minor Stats</strong></h5>
+        <p><strong>Intimidation:</strong> {characterData.intimidation}</p>
+        <p><strong>Physical Save Modifier:</strong> {characterData.physical_save_modifier}</p>
+      </div>
+
+      <Button css={buttonStyle} onClick={handleSubmit}>
         Submit Character
       </Button>
     </div>
