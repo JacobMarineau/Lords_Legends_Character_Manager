@@ -418,6 +418,87 @@ router.post("/", rejectUnauthenticated, async (req, res) => {
       vocationData.minor_stats.physical_save_modifier || 0;
   }
 
+  // ====== STAT CALCULATION FUNCTION ======
+
+  function calculateMajorStatModifier(stat) {
+    return Math.floor((stat - 10) / 2);
+  }
+
+  // ====== WILLPOWER, FEROCITY, ARCANA SINGLE SPEC FUNCTION ======
+
+  function applySingleSpecStat(stat) {
+    return stat;
+  }
+
+  // ====== UPDATE MINOR STATS BASED ON MAJOR STATS ======
+
+  function updateMinorStats(character) {
+    const updatedCharacter = { ...character };
+
+    // ====== CHARISMA ======
+    const charismaModifier = calculateMajorStatModifier(character.charisma);
+    updatedCharacter.persuasion = character.persuasion + charismaModifier;
+    updatedCharacter.deception = character.deception + charismaModifier;
+    updatedCharacter.bargaining = character.bargaining + charismaModifier;
+    updatedCharacter.performance = character.performance + charismaModifier;
+    updatedCharacter.charm = character.charm + charismaModifier;
+
+    // ====== STRENGTH ======
+    const strengthModifier = calculateMajorStatModifier(character.strength);
+    updatedCharacter.acrobatics = character.acrobatics + strengthModifier;
+    updatedCharacter.athletics = character.athletics + strengthModifier;
+    updatedCharacter.agility = character.agility + strengthModifier;
+    updatedCharacter.lifting = character.lifting + strengthModifier;
+
+    // ====== DEXTERITY ======
+    const dexterityModifier = calculateMajorStatModifier(character.dexterity);
+    updatedCharacter.sleight_of_hand =
+      character.sleight_of_hand + dexterityModifier;
+    updatedCharacter.stealth = character.stealth + dexterityModifier;
+    updatedCharacter.medicine = character.medicine + dexterityModifier;
+    updatedCharacter.weapon_mastery =
+      character.weapon_mastery + dexterityModifier;
+    updatedCharacter.carving = character.carving + dexterityModifier;
+
+    // ====== INTELLIGENCE ======
+    const intelligenceModifier = calculateMajorStatModifier(
+      character.intelligence
+    );
+    updatedCharacter.history = character.history + intelligenceModifier;
+    updatedCharacter.wisdom = character.wisdom + intelligenceModifier;
+    updatedCharacter.science = character.science + intelligenceModifier;
+    updatedCharacter.technology = character.technology + intelligenceModifier;
+    updatedCharacter.foraging = character.foraging + intelligenceModifier;
+
+    // ====== VITALITY ======
+    const vitalityModifier = calculateMajorStatModifier(character.vitality);
+    updatedCharacter.endurance = character.endurance + vitalityModifier;
+    updatedCharacter.resistance = character.resistance + vitalityModifier;
+
+    // ====== WILLPOWER ======
+    updatedCharacter.feat_of_heroism =
+      character.feat_of_heroism + applySingleSpecStat(character.willpower);
+    updatedCharacter.leadership =
+      character.leadership + applySingleSpecStat(character.willpower);
+    updatedCharacter.counter_charisma =
+      character.counter_charisma + applySingleSpecStat(character.willpower);
+
+    // ====== ARCANA ======
+    updatedCharacter.magical_knowledge =
+      character.magical_knowledge + applySingleSpecStat(character.arcana);
+    updatedCharacter.magic_save_modifier =
+      character.magic_save_modifier + applySingleSpecStat(character.arcana);
+
+    // ====== FEROCITY ======
+    updatedCharacter.intimidation =
+      character.intimidation + applySingleSpecStat(character.ferocity);
+    updatedCharacter.physical_save_modifier =
+      character.physical_save_modifier +
+      applySingleSpecStat(character.ferocity);
+
+    return updatedCharacter;
+  }
+
   try {
     const characterQuery = `
       INSERT INTO characters (
@@ -603,23 +684,20 @@ router.post("/", rejectUnauthenticated, async (req, res) => {
   }
 });
 
-// ====== ROUTER CHARACTER:ID ADD WEAPON ======
-router.post("/:character_id/weapons", async (req, res) => {
-  const { character_id } = req.params;
+//=============================
+//====== POSTS FOR SHEET ======
+//=============================
+
+// POST route to add a new weapon for a character
+router.post("/:characterId/weapons", async (req, res) => {
+  const { characterId } = req.params;
   const { weapon_name, damage_die, description } = req.body;
 
   try {
-    const query = `
-      INSERT INTO weapons (character_id, weapon_name, damage_die, description)
-      VALUES ($1, $2, $3, $4) RETURNING *;
-    `;
-    const result = await pool.query(query, [
-      character_id,
-      weapon_name,
-      damage_die,
-      description,
-    ]);
-
+    const result = await pool.query(
+      "INSERT INTO weapons (character_id, weapon_name, damage_die, description) VALUES ($1, $2, $3, $4) RETURNING *",
+      [characterId, weapon_name, damage_die, description]
+    );
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error("Error adding weapon:", error);
@@ -627,34 +705,114 @@ router.post("/:character_id/weapons", async (req, res) => {
   }
 });
 
-// ====== ROUTER CHARACTER:ID PUT ======
-router.put("/:id", async (req, res) => {
-  const characterId = req.params.id;
-  const { name, max_hp, current_hp, focus_points } = req.body; // Add any other fields you want to update
+// POST route to add a new spell for a character
+router.post("/:characterId/spells", async (req, res) => {
+  const { characterId } = req.params;
+  const { spell_name, damage_die, cost, action_type, description } = req.body;
 
   try {
-    const query = `
-      UPDATE characters
-      SET name = $1, max_hp = $2, current_hp = $3, focus_points = $4
-      WHERE id = $5
-      RETURNING *;
-    `;
+    const result = await pool.query(
+      "INSERT INTO spells (character_id, spell_name, damage_die, cost, action_type, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+      [characterId, spell_name, damage_die, cost, action_type, description]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error adding spell:", error);
+    res.status(500).json({ error: "Failed to add spell" });
+  }
+});
 
-    const result = await pool.query(query, [
-      name,
-      max_hp,
-      current_hp,
-      focus_points,
-      characterId,
-    ]);
+// POST route to add a new skill for a character
+router.post("/:characterId/skills", async (req, res) => {
+  const { characterId } = req.params;
+  const { skill_name, damage_die, description, action_type, cost } = req.body;
 
+  try {
+    const result = await pool.query(
+      "INSERT INTO skills (character_id, skill_name, damage_die, description, action_type, cost) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+      [characterId, skill_name, damage_die, description, action_type, cost]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error adding skill:", error);
+    res.status(500).json({ error: "Failed to add skill" });
+  }
+});
+
+// POST route to add a new equipment item for a character
+router.post("/:characterId/equipment", async (req, res) => {
+  const characterId = req.params.characterId;
+  const { name, type, description } = req.body;
+
+  try {
+    const result = await pool.query(
+      "INSERT INTO equipment (character_id, name, type, description) VALUES ($1, $2, $3, $4) RETURNING *",
+      [characterId, name, type, description]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error adding equipment:", error.message);
+    res.status(500).json({ message: "Error adding equipment" });
+  }
+});
+
+// POST route to add a new language for a character
+router.post("/:characterId/languages", async (req, res) => {
+  const { characterId } = req.params;
+  const { language_name } = req.body;
+
+  try {
+    const result = await pool.query(
+      "INSERT INTO languages (character_id, language_name) VALUES ($1, $2) RETURNING *",
+      [characterId, language_name]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error adding language:", error);
+    res.status(500).json({ error: "Failed to add language" });
+  }
+});
+
+// Put for character stats
+router.put("/:characterId", async (req, res) => {
+  const characterId = req.params.characterId;
+  const fieldsToUpdate = req.body;
+
+  console.log("Received update request for character:", characterId);
+  console.log("Request body:", fieldsToUpdate);
+
+  let updateFields = [];
+  let queryParams = [characterId];
+  let parameterIndex = 2;
+
+  Object.entries(fieldsToUpdate).forEach(([key, value]) => {
+    if (value !== undefined) {
+      updateFields.push(`${key} = $${parameterIndex}`);
+      queryParams.push(value);
+      parameterIndex += 1;
+    }
+  });
+
+  if (updateFields.length === 0) {
+    return res.status(400).send("No fields to update");
+  }
+
+  const query = `
+    UPDATE characters SET ${updateFields.join(", ")}
+    WHERE id = $1 RETURNING *;
+  `;
+
+  console.log("SQL Query:", query);
+  console.log("Query Parameters:", queryParams);
+
+  try {
+    const result = await pool.query(query, queryParams);
     if (result.rowCount === 0) {
       return res.status(404).json({ message: "Character not found" });
     }
-
-    res.status(200).json(result.rows[0]); // Return the updated character
+    res.status(200).json(result.rows[0]);
   } catch (error) {
-    console.error("Error updating character:", error);
+    console.error("Error updating character:", error.message, error.stack);
     res.status(500).json({ message: "Error updating character" });
   }
 });
@@ -725,30 +883,6 @@ router.delete("/:id", async (req, res) => {
     res
       .status(500)
       .json({ message: "Error deleting character and associated data" });
-  }
-});
-
-// ====== Update character stats ======
-router.put("/api/characters/:id", async (req, res) => {
-  const { id } = req.params;
-  const {
-    current_hp,
-    current_ar,
-    current_mr,
-    focus_points,
-    soul_rank,
-    ...rest
-  } = req.body;
-
-  try {
-    // Update only mutable stats in the database
-    await pool.query(
-      `UPDATE characters SET current_hp = $1, current_ar = $2, current_mr = $3, focus_points = $4, soul_rank = $5 WHERE id = $6`,
-      [current_hp, current_ar, current_mr, focus_points, soul_rank, id]
-    );
-    res.status(200).send("Character updated successfully");
-  } catch (error) {
-    res.status(500).json({ error: error.message });
   }
 });
 

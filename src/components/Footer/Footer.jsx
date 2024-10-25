@@ -10,12 +10,12 @@ function Footer() {
     color: ${theme.colors.offWhiteBackground};
     text-align: center;
     padding: ${theme.spacing.medium} 0;
-    position: fixed;
     width: 100%;
     bottom: 0;
     box-shadow: 0px -2px 10px rgba(0, 0, 0, 0.1);
     font-family: ${theme.fonts.body};
     font-size: ${theme.typography.sizes.small};
+    margin-top: 20px;
   `;
 
   return (

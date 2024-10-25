@@ -9,6 +9,14 @@ export const theme = {
     trim: "#5E584B",
     accents: "#BE9A61",
     contrast: "#926A6A",
+    charismaGroup: "#3366CC", // Friendly blue
+    strengthGroup: "#CC6600", // Warm brown-orange
+    dexterityGroup: "#66CC99", // Cool green
+    intelligenceGroup: "#9966CC", // Soft purple
+    vitalityGroup: "#FFCC00", // Yellow for high contrast
+    willpowerGroup: "#CC3333", // Strong red
+    arcanaGroup: "#009999", // Cyan for differentiation
+    ferocityGroup: "#993333", // Darker red for contrast
   },
   fonts: {
     main: '"Open Sans", sans-serif',
@@ -34,5 +42,6 @@ export const theme = {
     small: "8px",
     medium: "16px",
     large: "24px",
+    xxlarge: "48px",
   },
 };
