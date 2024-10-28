@@ -26,9 +26,10 @@ const CharacterSheet = () => {
     background: ${theme.colors.offWhiteBackground};
     padding: ${theme.spacing.large};
     border-radius: 12px;
-    max-width: 1200px;
+    max-width: 1300px;
     margin: 0 auto;
     margin-top: ${theme.spacing.large};
+    text-shadow: ${theme.effects.textDropShadow};
   `;
 
   const cardStyle = css`
@@ -38,13 +39,18 @@ const CharacterSheet = () => {
     padding: ${theme.spacing.large};
     border-radius: 8px;
     box-shadow: 0px 3px 6px ${theme.colors.boxShadow};
+    display: flex;
+    align-items: left;
+    text-shadow: ${theme.effects.textDropShadow};
   `;
 
   const buttonStyle = css`
     margin-top: ${theme.spacing.medium};
+    margin-bottom: ${theme.spacing.medium};
     background-color: ${theme.colors.contrast};
     border: none;
     padding: 8px 16px;
+    text-shadow: ${theme.effects.textDropShadow};
     &:hover {
       background-color: ${theme.colors.trim};
     }
@@ -55,8 +61,23 @@ const CharacterSheet = () => {
   border-bottom: 1px solid ${theme.colors.trim};
   
   &:last-of-type {
-    border-bottom: none; // Remove divider for the last item
+    border-bottom: none; 
   }
+  text-shadow: ${theme.effects.textDropShadow};
+`;
+
+const textStyle = css`
+  min-height: 30px;  
+  text-shadow: ${theme.effects.textDropShadow};
+`;
+
+const playerCardStyle = css`
+  background: ${theme.colors.offWhiteBackground2};
+  color: ${theme.colors.highContrastTextDark};
+  padding: ${theme.spacing.medium};
+  border-radius: 8px;
+  box-shadow: 0px 2px 4px ${theme.colors.boxShadow};
+  text-shadow: ${theme.effects.textDropShadow};
 `;
 const fetchCharacterData = async () => {
     try {
@@ -172,7 +193,7 @@ useEffect(() => {
             {minorStats.map((stat) => (
               <Col key={stat} md={6}>
                 <p>
-                  <strong>{stat.replace(/_/g, ' ').charAt(0).toUpperCase() + stat.replace(/_/g, ' ').slice(1)}:</strong> 
+                  <strong>{stat.replace(/_/g, ' ').charAt(0).toUpperCase() + stat.replace(/_/g, ' ').slice(1)}: </strong> 
                   {character[stat] + majorModifier} (Base: {character[stat]}, Modifier: {majorModifier})
                 </p>
               </Col>
@@ -190,25 +211,43 @@ useEffect(() => {
         <Spinner animation="border" variant="primary" />
       ) : (
         <>
+        <Row>
+        <Col>
           <h1>{character.character_name}'s Character Sheet</h1>
-
+          </Col>
+          <Col>
+          <Button css={buttonStyle} onClick={toggleMode}>Add / Edit Character Details</Button>
+          </Col>
+          </Row>
           {viewMode ? (
             <>
               {/* Basic Information */}
               <Card css={cardStyle} className="mb-3">
-                <Card.Header as="h3">Basic Information</Card.Header>
-                <Card.Body>
-                  <Row>
-                    <Col><p><strong>Name:</strong> {character.character_name}</p></Col>
-                    <Col><p><strong>Race:</strong> {character.race}</p></Col>
-                    <Col><p><strong>Vocation:</strong> {character.vocation}</p></Col>
-                    <Col><p><strong>Specialty:</strong> {character.specialty || 'N/A'}</p></Col>
-                    <Col><p><strong>Height:</strong> {character.height}</p></Col>
-                    <Col><p><strong>Age:</strong> {character.age}</p></Col>
-                    <Col><p><strong>Glint Pieces:</strong> {character.glint_pieces}</p></Col>
-                  </Row>
-                </Card.Body>
-              </Card>
+    <Card.Header as="h3">Basic Information</Card.Header>
+    <Card.Body>
+      <Row>
+        <Col><p css={textStyle}><strong>Name:</strong> {character.character_name}</p></Col>
+        <Col><p css={textStyle}><strong>Race:</strong> {character.race}</p></Col>
+        <Col><p css={textStyle}><strong>Vocation:</strong> {character.vocation}</p></Col>
+        <Col><p css={textStyle}><strong>Specialty:</strong> {character.specialty || 'N/A'}</p></Col>
+        <Col><p css={textStyle}><strong>Height:</strong> {character.height}</p></Col>
+        <Col><p css={textStyle}><strong>Age:</strong> {character.age}</p></Col>
+      </Row>
+      <Row>
+        <Col><p css={textStyle}><strong>Max HP:</strong> {character.max_hp}</p></Col>
+        <Col><p css={textStyle}><strong>Current HP:</strong> {character.current_hp}</p></Col>
+        <Col><p css={textStyle}><strong>Focus Points:</strong> {character.focus_points}</p></Col>
+        <Col><p css={textStyle}><strong>Soul Rank:</strong> {character.soul_rank}</p></Col>
+        <Col><p css={textStyle}><strong>Speed Class:</strong> {character.speed_class}</p></Col>
+      </Row>
+      <Row>
+        <Col><p css={textStyle}><strong>Current Temporary HP:</strong> {character.current_thp}</p></Col>
+        <Col><p css={textStyle}><strong>Current Armor Rating:</strong> {character.current_ar}</p></Col>
+        <Col><p css={textStyle}><strong>Current Over Shields:</strong> {character.current_os}</p></Col>
+        <Col><p css={textStyle}><strong>Current Magic Resistance:</strong> {character.current_mr}</p></Col>
+      </Row>
+    </Card.Body>
+  </Card>
 
               {/* Major Stats & Modifiers */}
               <Card css={cardStyle} className="mb-3">
@@ -240,19 +279,23 @@ useEffect(() => {
                 renderMinorStats(majorStat, minorStats)
               ))}
 
-              {/* Skills */}
-              {character.skills && character.skills.length > 0 && (
+        {/* Skills */}
+{character.skills && character.skills.length > 0 && (
   <Card css={cardStyle} className="mb-3">
     <Card.Header as="h3">Skills</Card.Header>
     <Card.Body>
       <Row>
         {character.skills.map((skill, index) => (
           <Col md={6} key={`skill-${index}`}>
-            <p><strong>Skill Name:</strong> {skill.skill_name}</p>
-            {skill.description && <p><strong>Description:</strong> {skill.description}</p>}
-            {skill.damage_die && <p><strong>Damage Die:</strong> {skill.damage_die}</p>}
-            {skill.action_type && <p><strong>Action Type:</strong> {skill.action_type}</p>}
-            {skill.cost && <p><strong>Cost:</strong> {skill.cost}</p>}
+            <Card css={playerCardStyle} className="mb-3">
+              <Card.Body>
+                <p css={textStyle}><strong>Skill Name:</strong> {skill.skill_name}</p>
+                {skill.description && <p css={textStyle}><strong>Description:</strong> {skill.description}</p>}
+                {skill.damage_die && <p css={textStyle}><strong>Damage Die:</strong> {skill.damage_die}</p>}
+                {skill.action_type && <p css={textStyle}><strong>Action Type:</strong> {skill.action_type}</p>}
+                {skill.cost && <p css={textStyle}><strong>Cost:</strong> {skill.cost}</p>}
+              </Card.Body>
+            </Card>
           </Col>
         ))}
       </Row>
@@ -260,19 +303,23 @@ useEffect(() => {
   </Card>
 )}
 
-              {/* Spells */}
-              {character.spells && character.spells.length > 0 && (
+       {/* Spells */}
+{character.spells && character.spells.length > 0 && (
   <Card css={cardStyle} className="mb-3">
     <Card.Header as="h3">Spells</Card.Header>
     <Card.Body>
       <Row>
         {character.spells.map((spell, index) => (
           <Col md={6} key={`spell-${index}`}>
-            <p><strong>Spell Name:</strong> {spell.spell_name}</p>
-            {spell.description && <p><strong>Description:</strong> {spell.description}</p>}
-            {spell.damage_die && <p><strong>Damage Die:</strong> {spell.damage_die}</p>}
-            {spell.action_type && <p><strong>Action Type:</strong> {spell.action_type}</p>}
-            {spell.cost && <p><strong>Cost:</strong> {spell.cost}</p>}
+            <Card css={playerCardStyle} className="mb-3">
+              <Card.Body>
+                <p css={textStyle}><strong>Spell Name:</strong> {spell.spell_name}</p>
+                {spell.description && <p css={textStyle}><strong>Description:</strong> {spell.description}</p>}
+                {spell.damage_die && <p css={textStyle}><strong>Damage Die:</strong> {spell.damage_die}</p>}
+                {spell.action_type && <p css={textStyle}><strong>Action Type:</strong> {spell.action_type}</p>}
+                {spell.cost && <p css={textStyle}><strong>Cost:</strong> {spell.cost}</p>}
+              </Card.Body>
+            </Card>
           </Col>
         ))}
       </Row>
@@ -281,23 +328,27 @@ useEffect(() => {
 )}
 
 
-              {/* Weapons */}
-              {character.weapons && character.weapons.length > 0 && (
-                <Card css={cardStyle} className="mb-3">
-                  <Card.Header as="h3">Weapons</Card.Header>
-                  <Card.Body>
-                    <Row>
-                      {character.weapons.map((weapon, index) => (
-                        <Col md={6} key={index}>
-                          <p><strong>Weapon Name:</strong> {weapon.weapon_name}</p>
-                          {weapon.description && <p><strong>Description:</strong> {weapon.description}</p>}
-                          {weapon.damage_die && <p><strong>Damage Die:</strong> {weapon.damage_die}</p>}
-                        </Col>
-                      ))}
-                    </Row>
-                  </Card.Body>
-                </Card>
-              )}
+             {/* Weapons */}
+{character.weapons && character.weapons.length > 0 && (
+  <Card css={cardStyle} className="mb-3">
+    <Card.Header as="h3">Weapons</Card.Header>
+    <Card.Body>
+      <Row>
+        {character.weapons.map((weapon, index) => (
+          <Col md={6} key={index}>
+            <Card css={playerCardStyle} className="mb-3">
+              <Card.Body>
+                <p css={textStyle}><strong>Weapon Name:</strong> {weapon.weapon_name}</p>
+                {weapon.description && <p css={textStyle}><strong>Description:</strong> {weapon.description}</p>}
+                {weapon.damage_die && <p css={textStyle}><strong>Damage Die:</strong> {weapon.damage_die}</p>}
+              </Card.Body>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+    </Card.Body>
+  </Card>
+)}
 
               {/* Equipment */}
               {character.equipment && character.equipment.length > 0 && (
@@ -330,7 +381,7 @@ useEffect(() => {
       <Row>
         {character.languages.map((language, index) => (
           <Col md={6} key={`language-${index}`}>
-            <p><strong>Language:</strong> {language.language_name}</p>
+            <p><strong>Language:</strong> {language}</p>
           </Col>
         ))}
       </Row>
@@ -339,12 +390,18 @@ useEffect(() => {
 )}
 
 
-              <Button css={buttonStyle} onClick={toggleMode}>Add / Edit Character Details</Button>
+             
             </>
           ) : (
             <div>
+              <Row>
+                <Col>
   <h3>Edit Character Base Attributes</h3>
-
+  </Col>
+  <Col>
+  <Button css={buttonStyle} onClick={() => handleSaveChanges()}>Save Changes</Button>
+  </Col>
+  </Row>
   <Form>
     {/* Character Basic Info */}
     <h4>Basic Information</h4>
@@ -355,7 +412,7 @@ useEffect(() => {
           <Form.Control
             type="text"
             defaultValue={character?.character_name}
-            onChange={(e) => setCharacterUpdates({ ...characterUpdates, character_name: e.target.value })}
+            onChange={(e) => setCharacterUpdates({ ...characterUpdates, name: e.target.value })}
           />
         </Form.Group>
       </Col>

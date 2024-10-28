@@ -25,7 +25,8 @@ const CharacterFormPart1 = () => {
   color: ${theme.colors.offWhiteBackground};
   max-width: 1200px;
   margin: 0 auto;
-   margin-top: ${theme.spacing.large};
+   margin-top: ${theme.spacing.xxlarge};
+    text-shadow: ${theme.effects.textDropShadow};
 `;
 
 
@@ -39,6 +40,7 @@ const CharacterFormPart1 = () => {
     &:focus {
       border-color: ${theme.colors.baseColor};
       box-shadow: 0 0 5px ${theme.colors.baseColor};
+       text-shadow: ${theme.effects.textDropShadow};
     }
   `;
 
@@ -51,13 +53,16 @@ const CharacterFormPart1 = () => {
     &:hover {
       background-color: ${theme.colors.baseColor2};
       border-color: ${theme.colors.baseColor2};
+       text-shadow: ${theme.effects.textDropShadow};
+       border-color: ${theme.colors.trim};
     }
   `;
 
   const labelStyle = css`
-    color: ${theme.colors.trim};
+    color: ${theme.colors.highContrastTextLight};
     font-weight: ${theme.typography.weights.bold};
     margin-bottom: ${theme.spacing.small};
+     text-shadow: ${theme.effects.textDropShadow};
   `;
 
   const [formData, setFormData] = useState({
@@ -284,7 +289,7 @@ console.log("Race Data:", raceData);
       </Row>
 
       <Button css={buttonStyle} onClick={handleSubmit}>
-        Submit
+        Next
       </Button>
     </Form>
   );
