@@ -90,6 +90,21 @@ const fetchCharacterData = async () => {
       setLoading(false);
     }
   };
+
+  // ====== CURRENT HP FUNCTION =======
+  // const [currentHP, setCurrentHP] = useState(() => {
+  //   return localStorage.getItem('currentHP') || character.current_hp || 0;
+  // });
+  // const [isEditingHP, setIsEditingHP] = useState(false);
+
+  // const handleHPChange = (e) => setCurrentHP(e.target.value);
+
+  // const handleHPKeyPress = (e) => {
+  //   if (e.key === 'Enter') {
+  //     localStorage.setItem('currentHP', currentHP);
+  //     setIsEditingHP(false); 
+  //   }
+  // };
 useEffect(() => {
   
     fetchCharacterData();
