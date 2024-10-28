@@ -18,7 +18,8 @@ const CharacterFormPart3 = ({ userId }) => {
     color: ${theme.colors.offWhiteBackground};
     max-width: 1200px;
     margin: 0 auto;
-    margin-top: ${theme.spacing.large};
+    margin-top: ${theme.spacing.xxlarge};
+     text-shadow: ${theme.effects.textDropShadow};
   `;
 
   const cardStyle = css`
@@ -27,24 +28,27 @@ const CharacterFormPart3 = ({ userId }) => {
     border-radius: 8px;
     box-shadow: 0px 4px 8px ${theme.colors.boxShadow};
     margin-bottom: ${theme.spacing.large};
+     text-shadow: ${theme.effects.textDropShadow};
   `;
 
   const headerStyle = css`
-    color: ${theme.colors.trim};
+    color: ${theme.colors.highContrastTextLight};
     font-size: ${theme.typography.sizes.large};
     font-weight: ${theme.typography.weights.bold};
     margin-bottom: ${theme.spacing.medium};
+     text-shadow: ${theme.effects.textDropShadow};
   `;
 
   const buttonStyle = css`
-    background-color: ${theme.colors.baseColor};
+    background-color: ${theme.colors.baseColor2};
     border-color: ${theme.colors.baseColor};
     margin-top: ${theme.spacing.large};
     padding: ${theme.spacing.small} ${theme.spacing.medium};
     font-size: ${theme.typography.sizes.large};
+     text-shadow: ${theme.effects.textDropShadow};
     &:hover {
-      background-color: ${theme.colors.baseColor2};
-      border-color: ${theme.colors.baseColor2};
+      background-color: ${theme.colors.trim};
+      border-color: ${theme.colors.trim};
     }
   `;
 

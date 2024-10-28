@@ -20,7 +20,7 @@ function Footer() {
 
   return (
     <footer css={footerStyle}>
-      &copy; {new Date().getFullYear()} Lords and Legends | Prime Digital Academy
+      &copy; {new Date().getFullYear()} Lords and Legends
     </footer>
   );
 }

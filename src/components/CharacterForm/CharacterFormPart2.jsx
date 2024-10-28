@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import React, { useState } from 'react';
-import { Form, Button, Row, Col } from 'react-bootstrap';
+import { Card, Form, Button, Row, Col } from 'react-bootstrap';
 import { css } from '@emotion/react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useTheme } from '@emotion/react';
@@ -15,6 +15,16 @@ const CharacterFormPart2 = () => {
 
   console.log("Current theme:", theme);
 
+  const cardStyle = css`
+  background: ${theme.colors.offWhiteBackground2};
+  color: ${theme.colors.trim};
+  padding: ${theme.spacing.large};
+  margin-bottom: ${theme.spacing.medium};
+  border-radius: 12px;
+  box-shadow: 0px 4px 10px ${theme.colors.boxShadow};
+`;
+
+
   const formStyle = css`
   background: ${theme.colors.baseColor2};
   padding: ${theme.spacing.large};
@@ -23,7 +33,8 @@ const CharacterFormPart2 = () => {
   color: ${theme.colors.offWhiteBackground};
   max-width: 1200px;
   margin: 0 auto;
-  margin-top: ${theme.spacing.large};
+  margin-top: ${theme.spacing.xxlarge};
+  text-shadow: ${theme.effects.textDropShadow};
 `;
 
 const inputStyle = css`
@@ -32,6 +43,7 @@ const inputStyle = css`
   border-radius: 8px;
   margin: ${theme.spacing.small} 0;
   padding: ${theme.spacing.small};
+  text-shadow: ${theme.effects.textDropShadow};
   width: 100%;
   &:focus {
     border-color: ${theme.colors.baseColor};
@@ -40,27 +52,33 @@ const inputStyle = css`
 `;
 
 const buttonStyle = css`
-  background-color: ${theme.colors.baseColor};
-  border-color: ${theme.colors.baseColor};
-  margin-top: ${theme.spacing.large};
-  padding: ${theme.spacing.small} ${theme.spacing.medium};
-  font-size: ${theme.typography.sizes.large};
-  &:hover {
-    background-color: ${theme.colors.trim};
-    border-color: ${theme.colors.baseColor2};
-  }
-`;
+    background-color: ${theme.colors.baseColor};
+    border-color: ${theme.colors.baseColor};
+    margin-top: ${theme.spacing.large};
+    width: auto;
+    padding: ${theme.spacing.small} ${theme.spacing.medium};
+    font-size: ${theme.typography.sizes.large};
+    &:hover {
+      background-color: ${theme.colors.baseColor2};
+      border-color: ${theme.colors.baseColor2};
+       text-shadow: ${theme.effects.textDropShadow};
+       border-color: ${theme.colors.trim};
+    }
+  `;
+
 
 const labelStyle = css`
-  color: ${theme.colors.trim};
+  color: ${theme.colors.highContrastTextLight};
   font-weight: ${theme.typography.weights.bold};
   margin-bottom: ${theme.spacing.small};
+  text-shadow: ${theme.effects.textDropShadow};
 `;
 
 const headerStyle = css`
-  color: ${theme.colors.trim};
+  color: ${theme.colors.highContrastTextLight};
   font-weight: ${theme.typography.weights.bold};
   margin-bottom: ${theme.spacing.medium};
+  text-shadow: ${theme.effects.textDropShadow};
 `;
 
   const [formData, setFormData] = useState({
@@ -117,501 +135,538 @@ const headerStyle = css`
 
   return (
     <Form css={formStyle} className="row">
-      {/* Major Stats */}
-      <h4 css={headerStyle}>Major Stats</h4>
-      <Row>
-        <Col md={6}>
-          <Form.Group controlId="charisma">
-            <Form.Label css={labelStyle}>Charisma</Form.Label>
-            <Form.Control
-              type="number"
-              name="charisma"
-              value={formData.charisma}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group controlId="strength">
-            <Form.Label css={labelStyle}>Strength</Form.Label>
-            <Form.Control
-              type="number"
-              name="strength"
-              value={formData.strength}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
-      <Row>
-        <Col md={6}>
-          <Form.Group controlId="dexterity">
-            <Form.Label css={labelStyle}>Dexterity</Form.Label>
-            <Form.Control
-              type="number"
-              name="dexterity"
-              value={formData.dexterity}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group controlId="intelligence">
-            <Form.Label css={labelStyle}>Intelligence</Form.Label>
-            <Form.Control
-              type="number"
-              name="intelligence"
-              value={formData.intelligence}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
-      <Row>
-        <Col md={6}>
-          <Form.Group controlId="vitality">
-            <Form.Label css={labelStyle}>Vitality</Form.Label>
-            <Form.Control
-              type="number"
-              name="vitality"
-              value={formData.vitality}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group controlId="willpower">
-            <Form.Label css={labelStyle}>Willpower</Form.Label>
-            <Form.Control
-              type="number"
-              name="willpower"
-              value={formData.willpower}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
-      <Row>
-        <Col md={6}>
-          <Form.Group controlId="arcana">
-            <Form.Label css={labelStyle}>Arcana</Form.Label>
-            <Form.Control
-              type="number"
-              name="arcana"
-              value={formData.arcana}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group controlId="ferocity">
-            <Form.Label css={labelStyle}>Ferocity</Form.Label>
-            <Form.Control
-              type="number"
-              name="ferocity"
-              value={formData.ferocity}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
+    {/* Major Stats */}
+    <Card css={cardStyle}>
+      <Card.Header as="h4" css={headerStyle}>Major Stats</Card.Header>
+      <Card.Body>
+        <Row>
+          <Col md={6}>
+            <Form.Group controlId="charisma">
+              <Form.Label css={labelStyle}>Charisma</Form.Label>
+              <Form.Control
+                type="number"
+                name="charisma"
+                value={formData.charisma}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group controlId="strength">
+              <Form.Label css={labelStyle}>Strength</Form.Label>
+              <Form.Control
+                type="number"
+                name="strength"
+                value={formData.strength}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
+            <Form.Group controlId="dexterity">
+              <Form.Label css={labelStyle}>Dexterity</Form.Label>
+              <Form.Control
+                type="number"
+                name="dexterity"
+                value={formData.dexterity}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group controlId="intelligence">
+              <Form.Label css={labelStyle}>Intelligence</Form.Label>
+              <Form.Control
+                type="number"
+                name="intelligence"
+                value={formData.intelligence}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
+            <Form.Group controlId="vitality">
+              <Form.Label css={labelStyle}>Vitality</Form.Label>
+              <Form.Control
+                type="number"
+                name="vitality"
+                value={formData.vitality}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group controlId="willpower">
+              <Form.Label css={labelStyle}>Willpower</Form.Label>
+              <Form.Control
+                type="number"
+                name="willpower"
+                value={formData.willpower}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
+            <Form.Group controlId="arcana">
+              <Form.Label css={labelStyle}>Arcana</Form.Label>
+              <Form.Control
+                type="number"
+                name="arcana"
+                value={formData.arcana}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group controlId="ferocity">
+              <Form.Label css={labelStyle}>Ferocity</Form.Label>
+              <Form.Control
+                type="number"
+                name="ferocity"
+                value={formData.ferocity}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+      </Card.Body>
+    </Card>
+  
+    {/* Charisma Minor Stats */}
+    <Card css={cardStyle}>
+      <Card.Header as="h4" css={headerStyle}>Charisma Minor Stats</Card.Header>
+      <Card.Body>
+        <Row>
+          <Col md={4}>
+            <Form.Group controlId="persuasion">
+              <Form.Label css={labelStyle}>Persuasion</Form.Label>
+              <Form.Control
+                type="number"
+                name="persuasion"
+                value={formData.persuasion}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group controlId="deception">
+              <Form.Label css={labelStyle}>Deception</Form.Label>
+              <Form.Control
+                type="number"
+                name="deception"
+                value={formData.deception}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group controlId="bargaining">
+              <Form.Label css={labelStyle}>Bargaining</Form.Label>
+              <Form.Control
+                type="number"
+                name="bargaining"
+                value={formData.bargaining}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
+            <Form.Group controlId="performance">
+              <Form.Label css={labelStyle}>Performance</Form.Label>
+              <Form.Control
+                type="number"
+                name="performance"
+                value={formData.performance}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group controlId="charm">
+              <Form.Label css={labelStyle}>Charm</Form.Label>
+              <Form.Control
+                type="number"
+                name="charm"
+                value={formData.charm}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+      </Card.Body>
+    </Card>
+  
+    {/* Strength Minor Stats */}
+    <Card css={cardStyle}>
+      <Card.Header as="h4" css={headerStyle}>Strength Minor Stats</Card.Header>
+      <Card.Body>
+        <Row>
+          <Col md={4}>
+            <Form.Group controlId="acrobatics">
+              <Form.Label css={labelStyle}>Acrobatics</Form.Label>
+              <Form.Control
+                type="number"
+                name="acrobatics"
+                value={formData.acrobatics}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group controlId="athletics">
+              <Form.Label css={labelStyle}>Athletics</Form.Label>
+              <Form.Control
+                type="number"
+                name="athletics"
+                value={formData.athletics}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group controlId="agility">
+              <Form.Label css={labelStyle}>Agility</Form.Label>
+              <Form.Control
+                type="number"
+                name="agility"
+                value={formData.agility}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
+            <Form.Group controlId="lifting">
+              <Form.Label css={labelStyle}>Lifting</Form.Label>
+              <Form.Control
+                type="number"
+                name="lifting"
+                value={formData.lifting}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+      </Card.Body>
+    </Card>
+  
+    {/* Dexterity Minor Stats */}
+    <Card css={cardStyle}>
+      <Card.Header as="h4" css={headerStyle}>Dexterity Minor Stats</Card.Header>
+      <Card.Body>
+        <Row>
+          <Col md={4}>
+            <Form.Group controlId="sleight_of_hand">
+              <Form.Label css={labelStyle}>Sleight of Hand</Form.Label>
+              <Form.Control
+                type="number"
+                name="sleight_of_hand"
+                value={formData.sleight_of_hand}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group controlId="stealth">
+              <Form.Label css={labelStyle}>Stealth</Form.Label>
+              <Form.Control
+                type="number"
+                name="stealth"
+                value={formData.stealth}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group controlId="medicine">
+              <Form.Label css={labelStyle}>Medicine</Form.Label>
+              <Form.Control
+                type="number"
+                name="medicine"
+                value={formData.medicine}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
+            <Form.Group controlId="weapon_mastery">
+              <Form.Label css={labelStyle}>Weapon Mastery</Form.Label>
+              <Form.Control
+                type="number"
+                name="weapon_mastery"
+                value={formData.weapon_mastery}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group controlId="carving">
+              <Form.Label css={labelStyle}>Carving</Form.Label>
+              <Form.Control
+                type="number"
+                name="carving"
+                value={formData.carving}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+      </Card.Body>
+    </Card>
+  
+    {/* Intelligence Minor Stats */}
+    <Card css={cardStyle}>
+      <Card.Header as="h4" css={headerStyle}>Intelligence Minor Stats</Card.Header>
+      <Card.Body>
+        <Row>
+          <Col md={4}>
+            <Form.Group controlId="history">
+              <Form.Label css={labelStyle}>History</Form.Label>
+              <Form.Control
+                type="number"
+                name="history"
+                value={formData.history}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group controlId="wisdom">
+              <Form.Label css={labelStyle}>Wisdom</Form.Label>
+              <Form.Control
+                type="number"
+                name="wisdom"
+                value={formData.wisdom}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group controlId="science">
+              <Form.Label css={labelStyle}>Science</Form.Label>
+              <Form.Control
+                type="number"
+                name="science"
+                value={formData.science}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
+            <Form.Group controlId="technology">
+              <Form.Label css={labelStyle}>Technology</Form.Label>
+              <Form.Control
+                type="number"
+                name="technology"
+                value={formData.technology}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group controlId="foraging">
+              <Form.Label css={labelStyle}>Foraging</Form.Label>
+              <Form.Control
+                type="number"
+                name="foraging"
+                value={formData.foraging}
+                onChange={handleChange}
+                css={inputStyle}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+      </Card.Body>
+    </Card>
+  
+    {/* Vitality Minor Stats */}
+<Card css={cardStyle}>
+  <Card.Header as="h4" css={headerStyle}>Vitality Minor Stats</Card.Header>
+  <Card.Body>
+    <Row>
+      <Col md={6}>
+        <Form.Group controlId="endurance">
+          <Form.Label css={labelStyle}>Endurance</Form.Label>
+          <Form.Control
+            type="number"
+            name="endurance"
+            value={formData.endurance}
+            onChange={handleChange}
+            css={inputStyle}
+          />
+        </Form.Group>
+      </Col>
+      <Col md={6}>
+        <Form.Group controlId="resistance">
+          <Form.Label css={labelStyle}>Resistance</Form.Label>
+          <Form.Control
+            type="number"
+            name="resistance"
+            value={formData.resistance}
+            onChange={handleChange}
+            css={inputStyle}
+          />
+        </Form.Group>
+      </Col>
+    </Row>
+  </Card.Body>
+</Card>
 
-      {/* Charisma Minor Stats */}
-      <h4 css={headerStyle}>Charisma Minor Stats</h4>
-      <Row>
-        <Col md={4}>
-          <Form.Group controlId="persuasion">
-            <Form.Label css={labelStyle}>Persuasion</Form.Label>
-            <Form.Control
-              type="number"
-              name="persuasion"
-              value={formData.persuasion}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={4}>
-          <Form.Group controlId="deception">
-            <Form.Label css={labelStyle}>Deception</Form.Label>
-            <Form.Control
-              type="number"
-              name="deception"
-              value={formData.deception}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={4}>
-          <Form.Group controlId="bargaining">
-            <Form.Label css={labelStyle}>Bargaining</Form.Label>
-            <Form.Control
-              type="number"
-              name="bargaining"
-              value={formData.bargaining}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
-      <Row>
-        <Col md={6}>
-          <Form.Group controlId="performance">
-            <Form.Label css={labelStyle}>Performance</Form.Label>
-            <Form.Control
-              type="number"
-              name="performance"
-              value={formData.performance}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group controlId="charm">
-            <Form.Label css={labelStyle}>Charm</Form.Label>
-            <Form.Control
-              type="number"
-              name="charm"
-              value={formData.charm}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
+{/* Willpower Minor Stats */}
+<Card css={cardStyle}>
+  <Card.Header as="h4" css={headerStyle}>Willpower Minor Stats</Card.Header>
+  <Card.Body>
+    <Row>
+      <Col md={4}>
+        <Form.Group controlId="feat_of_heroism">
+          <Form.Label css={labelStyle}>Feat of Heroism</Form.Label>
+          <Form.Control
+            type="number"
+            name="feat_of_heroism"
+            value={formData.feat_of_heroism}
+            onChange={handleChange}
+            css={inputStyle}
+          />
+        </Form.Group>
+      </Col>
+      <Col md={4}>
+        <Form.Group controlId="leadership">
+          <Form.Label css={labelStyle}>Leadership</Form.Label>
+          <Form.Control
+            type="number"
+            name="leadership"
+            value={formData.leadership}
+            onChange={handleChange}
+            css={inputStyle}
+          />
+        </Form.Group>
+      </Col>
+      <Col md={4}>
+        <Form.Group controlId="counter_charisma">
+          <Form.Label css={labelStyle}>Counter Charisma</Form.Label>
+          <Form.Control
+            type="number"
+            name="counter_charisma"
+            value={formData.counter_charisma}
+            onChange={handleChange}
+            css={inputStyle}
+          />
+        </Form.Group>
+      </Col>
+    </Row>
+  </Card.Body>
+</Card>
 
-      {/* Strength Minor Stats */}
-      <h4 css={headerStyle}>Strength Minor Stats</h4>
-      <Row>
-        <Col md={4}>
-          <Form.Group controlId="acrobatics">
-            <Form.Label css={labelStyle}>Acrobatics</Form.Label>
-            <Form.Control
-              type="number"
-              name="acrobatics"
-              value={formData.acrobatics}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={4}>
-          <Form.Group controlId="athletics">
-            <Form.Label css={labelStyle}>Athletics</Form.Label>
-            <Form.Control
-              type="number"
-              name="athletics"
-              value={formData.athletics}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={4}>
-          <Form.Group controlId="agility">
-            <Form.Label css={labelStyle}>Agility</Form.Label>
-            <Form.Control
-              type="number"
-              name="agility"
-              value={formData.agility}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
-      <Row>
-        <Col md={6}>
-          <Form.Group controlId="lifting">
-            <Form.Label css={labelStyle}>Lifting</Form.Label>
-            <Form.Control
-              type="number"
-              name="lifting"
-              value={formData.lifting}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
+{/* Arcana Minor Stats */}
+<Card css={cardStyle}>
+  <Card.Header as="h4" css={headerStyle}>Arcana Minor Stats</Card.Header>
+  <Card.Body>
+    <Row>
+      <Col md={6}>
+        <Form.Group controlId="magical_knowledge">
+          <Form.Label css={labelStyle}>Magical Knowledge</Form.Label>
+          <Form.Control
+            type="number"
+            name="magical_knowledge"
+            value={formData.magical_knowledge}
+            onChange={handleChange}
+            css={inputStyle}
+          />
+        </Form.Group>
+      </Col>
+      <Col md={6}>
+        <Form.Group controlId="magic_save_modifier">
+          <Form.Label css={labelStyle}>Magic Save Modifier</Form.Label>
+          <Form.Control
+            type="number"
+            name="magic_save_modifier"
+            value={formData.magic_save_modifier}
+            onChange={handleChange}
+            css={inputStyle}
+          />
+        </Form.Group>
+      </Col>
+    </Row>
+  </Card.Body>
+</Card>
 
-      {/* Dexterity Minor Stats */}
-      <h4 css={headerStyle}>Dexterity Minor Stats</h4>
-      <Row>
-        <Col md={4}>
-          <Form.Group controlId="sleight_of_hand">
-            <Form.Label css={labelStyle}>Sleight of Hand</Form.Label>
-            <Form.Control
-              type="number"
-              name="sleight_of_hand"
-              value={formData.sleight_of_hand}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={4}>
-          <Form.Group controlId="stealth">
-            <Form.Label css={labelStyle}>Stealth</Form.Label>
-            <Form.Control
-              type="number"
-              name="stealth"
-              value={formData.stealth}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={4}>
-          <Form.Group controlId="medicine">
-            <Form.Label css={labelStyle}>Medicine</Form.Label>
-            <Form.Control
-              type="number"
-              name="medicine"
-              value={formData.medicine}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
-      <Row>
-        <Col md={6}>
-          <Form.Group controlId="weapon_mastery">
-            <Form.Label css={labelStyle}>Weapon Mastery</Form.Label>
-            <Form.Control
-              type="number"
-              name="weapon_mastery"
-              value={formData.weapon_mastery}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group controlId="carving">
-            <Form.Label css={labelStyle}>Carving</Form.Label>
-            <Form.Control
-              type="number"
-              name="carving"
-              value={formData.carving}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
+{/* Ferocity Minor Stats */}
+<Card css={cardStyle}>
+  <Card.Header as="h4" css={headerStyle}>Ferocity Minor Stats</Card.Header>
+  <Card.Body>
+    <Row>
+      <Col md={6}>
+        <Form.Group controlId="intimidation">
+          <Form.Label css={labelStyle}>Intimidation</Form.Label>
+          <Form.Control
+            type="number"
+            name="intimidation"
+            value={formData.intimidation}
+            onChange={handleChange}
+            css={inputStyle}
+          />
+        </Form.Group>
+      </Col>
+      <Col md={6}>
+        <Form.Group controlId="physical_save_modifier">
+          <Form.Label css={labelStyle}>Physical Save Modifier</Form.Label>
+          <Form.Control
+            type="number"
+            name="physical_save_modifier"
+            value={formData.physical_save_modifier}
+            onChange={handleChange}
+            css={inputStyle}
+          />
+        </Form.Group>
+      </Col>
+    </Row>
+  </Card.Body>
+</Card>
 
-      {/* Intelligence Minor Stats */}
-      <h4 css={headerStyle}>Intelligence Minor Stats</h4>
-      <Row>
-        <Col md={4}>
-          <Form.Group controlId="history">
-            <Form.Label css={labelStyle}>History</Form.Label>
-            <Form.Control
-              type="number"
-              name="history"
-              value={formData.history}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={4}>
-          <Form.Group controlId="wisdom">
-            <Form.Label css={labelStyle}>Wisdom</Form.Label>
-            <Form.Control
-              type="number"
-              name="wisdom"
-              value={formData.wisdom}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={4}>
-          <Form.Group controlId="science">
-            <Form.Label css={labelStyle}>Science</Form.Label>
-            <Form.Control
-              type="number"
-              name="science"
-              value={formData.science}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
-      <Row>
-        <Col md={6}>
-          <Form.Group controlId="technology">
-            <Form.Label css={labelStyle}>Technology</Form.Label>
-            <Form.Control
-              type="number"
-              name="technology"
-              value={formData.technology}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group controlId="foraging">
-            <Form.Label css={labelStyle}>Foraging</Form.Label>
-            <Form.Control
-              type="number"
-              name="foraging"
-              value={formData.foraging}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
-
-      {/* Vitality Minor Stats */}
-      <h4 css={headerStyle}>Vitality Minor Stats</h4>
-      <Row>
-        <Col md={6}>
-          <Form.Group controlId="endurance">
-            <Form.Label css={labelStyle}>Endurance</Form.Label>
-            <Form.Control
-              type="number"
-              name="endurance"
-              value={formData.endurance}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group controlId="resistance">
-            <Form.Label css={labelStyle}>Resistance</Form.Label>
-            <Form.Control
-              type="number"
-              name="resistance"
-              value={formData.resistance}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
-
-      {/* Willpower Minor Stats */}
-      <h4 css={headerStyle}>Willpower Minor Stats</h4>
-      <Row>
-        <Col md={4}>
-          <Form.Group controlId="feat_of_heroism">
-            <Form.Label css={labelStyle}>Feat of Heroism</Form.Label>
-            <Form.Control
-              type="number"
-              name="feat_of_heroism"
-              value={formData.feat_of_heroism}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={4}>
-          <Form.Group controlId="leadership">
-            <Form.Label css={labelStyle}>Leadership</Form.Label>
-            <Form.Control
-              type="number"
-              name="leadership"
-              value={formData.leadership}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={4}>
-          <Form.Group controlId="counter_charisma">
-            <Form.Label css={labelStyle}>Counter Charisma</Form.Label>
-            <Form.Control
-              type="number"
-              name="counter_charisma"
-              value={formData.counter_charisma}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
-
-      {/* Arcana Minor Stats */}
-      <h4 css={headerStyle}>Arcana Minor Stats</h4>
-      <Row>
-        <Col md={6}>
-          <Form.Group controlId="magical_knowledge">
-            <Form.Label css={labelStyle}>Magical Knowledge</Form.Label>
-            <Form.Control
-              type="number"
-              name="magical_knowledge"
-              value={formData.magical_knowledge}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group controlId="magic_save_modifier">
-            <Form.Label css={labelStyle}>Magic Save Modifier</Form.Label>
-            <Form.Control
-              type="number"
-              name="magic_save_modifier"
-              value={formData.magic_save_modifier}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
-
-      {/* Ferocity Minor Stats */}
-      <h4 css={headerStyle}>Ferocity Minor Stats</h4>
-      <Row>
-        <Col md={6}>
-          <Form.Group controlId="intimidation">
-            <Form.Label css={labelStyle}>Intimidation</Form.Label>
-            <Form.Control
-              type="number"
-              name="intimidation"
-              value={formData.intimidation}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group controlId="physical_save_modifier">
-            <Form.Label css={labelStyle}>Physical Save Modifier</Form.Label>
-            <Form.Control
-              type="number"
-              name="physical_save_modifier"
-              value={formData.physical_save_modifier}
-              onChange={handleChange}
-              css={inputStyle}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
-
-      <Button css={buttonStyle} onClick={handleSubmit}>
+    <Button css={buttonStyle} onClick={handleSubmit}>
         Next
       </Button>
-    </Form>
+  </Form>
+  
   );
 
 };

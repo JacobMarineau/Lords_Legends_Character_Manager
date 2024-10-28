@@ -23,14 +23,16 @@ const CharacterSummary = () => {
     max-width: 1200px;
     margin: 0 auto;
     margin-top: ${theme.spacing.large};
+    text-shadow: ${theme.effects.textDropShadow};
   `;
 
   const headingStyle = css`
     color: ${theme.colors.headingFooter};
     font-family: ${theme.fonts.heading};
-    font-size: ${theme.typography.sizes.large};
+    font-size: ${theme.typography.sizes.xlarge};
     text-align: center;
     margin-bottom: ${theme.spacing.large};
+    text-shadow: ${theme.effects.textDropShadow};
   `;
 
   const characterCardStyle = css`
@@ -51,6 +53,19 @@ const CharacterSummary = () => {
     background-color: ${theme.colors.contrast};
     border: none;
     padding: 8px 16px;
+    margin-right: 8px;
+    text-shadow: ${theme.effects.textDropShadow};
+    &:hover {
+      background-color: ${theme.colors.trim};
+    }
+  `;
+
+  const buttonDeleteStyle = css`
+    margin-top: ${theme.spacing.medium};
+    background-color: ${theme.colors.ferocityGroup};
+    border: none;
+    padding: 8px 16px;
+    text-shadow: ${theme.effects.textDropShadow};
     &:hover {
       background-color: ${theme.colors.trim};
     }
@@ -169,7 +184,7 @@ const CharacterSummary = () => {
             <Button variant="primary" css={buttonStyle} onClick={() => handleViewCharacter(character.character_id)}>
               View Character Sheet
             </Button>
-            <Button variant="danger" css={buttonStyle} onClick={() => handleDelete(character.character_id)}>
+            <Button variant="danger" css={buttonDeleteStyle} onClick={() => handleDelete(character.character_id)}>
               Delete Character
             </Button>
           </Card.Body>

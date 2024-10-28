@@ -26,7 +26,6 @@ function Nav({ characterId }) {
   const secondaryNavStyle = css`
     background-color: ${theme.colors.baseColor2};
     padding: ${theme.spacing.small};
-    
     display: flex;
     justify-content: flex-start;
     margin-top: ${theme.spacing.small};
@@ -47,6 +46,14 @@ function Nav({ characterId }) {
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5); /* Drop shadow */
   `;
 
+  // Logo Styling
+  const linkStylePrimaryLogo = css`
+    height: 40px; /* Adjust height for desired size */
+    width: auto; /* Maintain aspect ratio */
+    margin-right: ${theme.spacing.medium};
+    filter: drop-shadow(2px 2px 5px rgba(0, 0, 0, 0.5));
+  `;
+
   // Link Styling for Secondary Nav
   const linkStyleSecondary = css`
     color: ${theme.colors.offWhiteBackground};
@@ -62,8 +69,13 @@ function Nav({ characterId }) {
     <>
       {/* Primary Nav */}
       <div css={primaryNavStyle}>
-        {/* Space for logo */}
-        <h2 className="nav-title" css={linkStylePrimary}>LORDS & LEGENDS</h2>
+        {/* Logo */}
+        <img 
+          src="/Nav_Logo_LL.ico" 
+          alt="Lords & Legends Logo" 
+          css={linkStylePrimaryLogo} 
+          className="nav-logo" 
+        />
 
         {user.id && (
           <>

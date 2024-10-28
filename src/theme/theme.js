@@ -9,14 +9,20 @@ export const theme = {
     trim: "#5E584B",
     accents: "#BE9A61",
     contrast: "#926A6A",
-    charismaGroup: "#3366CC", // Friendly blue
-    strengthGroup: "#CC6600", // Warm brown-orange
-    dexterityGroup: "#66CC99", // Cool green
-    intelligenceGroup: "#9966CC", // Soft purple
-    vitalityGroup: "#FFCC00", // Yellow for high contrast
-    willpowerGroup: "#CC3333", // Strong red
-    arcanaGroup: "#009999", // Cyan for differentiation
-    ferocityGroup: "#993333", // Darker red for contrast
+
+    //High contrast text color
+    highContrastTextDark: "#1C1C1C", // Dark high-contrast color for text
+    highContrastTextLight: "#FAFAFA", // Light high-contrast color for text
+
+    //Colors for stats:
+    charismaGroup: "#4A90E2", // Bright sky blue
+    strengthGroup: "#FF8C42", // Bright orange
+    dexterityGroup: "#4CD964", // Lively green
+    intelligenceGroup: "#C084FF", // Vivid lavender
+    vitalityGroup: "#FFDD33", // Bright yellow
+    willpowerGroup: "#FF5C5C", // Bright red
+    arcanaGroup: "#33CCCC", // Bright teal
+    ferocityGroup: "#D9534F", // Brightened deep red
   },
   fonts: {
     main: '"Open Sans", sans-serif',
@@ -27,11 +33,15 @@ export const theme = {
       small: "12px",
       normal: "16px",
       large: "24px",
+      xlarge: "40px",
     },
     weights: {
       regular: 400,
       bold: 700,
     },
+  },
+  effects: {
+    textDropShadow: "1px 1px 2px rgba(0, 0, 0, 0.4)",
   },
   breakpoints: {
     mobile: "576px",
