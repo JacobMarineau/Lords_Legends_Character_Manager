@@ -21,6 +21,8 @@ const CharacterSheet = () => {
   const [newEquipment, setNewEquipment] = useState({ name: '', type: '', description: '' });
   const [newLanguage, setNewLanguage] = useState('');
 
+
+
   // Styling
   const containerStyle = css`
     background: ${theme.colors.offWhiteBackground};
@@ -79,6 +81,20 @@ const playerCardStyle = css`
   box-shadow: 0px 2px 4px ${theme.colors.boxShadow};
   text-shadow: ${theme.effects.textDropShadow};
 `;
+
+// const editableTextStyle = css`
+//   padding: 2px 4px;
+//   border: none;
+//   border-bottom: 1px dashed ${theme.colors.trim};
+//   background: none;
+//   color: ${theme.colors.offWhiteBackground};
+//   text-align: center;
+//   &:focus {
+//     outline: none;
+//     border-bottom: 1px solid ${theme.colors.trim};
+//   }
+// `;
+
 const fetchCharacterData = async () => {
     try {
       const res = await axios.get(`/api/characters/${characterId}`);
@@ -91,20 +107,6 @@ const fetchCharacterData = async () => {
     }
   };
 
-  // ====== CURRENT HP FUNCTION =======
-  // const [currentHP, setCurrentHP] = useState(() => {
-  //   return localStorage.getItem('currentHP') || character.current_hp || 0;
-  // });
-  // const [isEditingHP, setIsEditingHP] = useState(false);
-
-  // const handleHPChange = (e) => setCurrentHP(e.target.value);
-
-  // const handleHPKeyPress = (e) => {
-  //   if (e.key === 'Enter') {
-  //     localStorage.setItem('currentHP', currentHP);
-  //     setIsEditingHP(false); 
-  //   }
-  // };
 useEffect(() => {
   
     fetchCharacterData();
