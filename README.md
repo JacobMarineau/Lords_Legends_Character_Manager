@@ -52,24 +52,24 @@ Lords & Legends Character Manager is a web application designed to help users cr
    ```bash
    git clone https://github.com/your-username/lords-legends-character-manager.git
    cd lords-legends-character-manager
+   ```
 Install dependencies:
 
-bash
-Copy code
+```bash
 npm install
 Set up environment variables: Create a .env file in the root directory with the following:
+```
 
-plaintext
-Copy code
 PORT=5001
 DATABASE_URL=postgres://username:password@localhost:5432/your-database-name
+
 Set up the database: Run the SQL scripts in the /database folder to create tables and seed data if necessary.
 
 Start the server:
 
-bash
-Copy code
+```bash
 npm run dev
+```
 Access the application: Open your browser and navigate to http://localhost:3000.
 
 Usage
@@ -81,8 +81,8 @@ Managing Characters
 View all characters on the "Character Summary" page.
 Delete a character by clicking the Delete button on its card.
 File Structure
-plaintext
-Copy code
+
+````
 lords-legends-character-manager/
 ├── client/               # React frontend
 │   ├── components/       # Reusable UI components
@@ -98,22 +98,26 @@ lords-legends-character-manager/
 ├── README.md             # Project documentation
 ├── package.json          # Node.js dependencies and scripts
 └── .env                  # Environment variables
-Contributing
+````
+
+## Contributing
 Contributions are welcome! Please follow these steps:
 
 Fork the repository.
 Create a new branch:
-bash
-Copy code
+```bash
 git checkout -b feature-name
+```
 Commit your changes:
-bash
-Copy code
+
+```bash
 git commit -m "Description of changes"
+```
 Push to the branch:
-bash
-Copy code
+
+```bash
 git push origin feature-name
+```
 Open a pull request on GitHub.
 License
 This project is licensed under the MIT License. See the LICENSE file for more information.
