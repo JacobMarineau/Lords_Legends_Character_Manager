@@ -1,124 +1,125 @@
-# Prime Solo Project - Starting Repo
+# Lords & Legends Character Manager
 
-This version uses React, Redux, Express, Passport, and PostgreSQL (a full list of dependencies can be found in `package.json`).
+Lords & Legends Character Manager is a web application designed to help users create, view, manage, and delete characters for RPG campaigns or game systems. It allows players to define characters' attributes, equipment, skills, and more, providing a streamlined and visually appealing interface.
 
-We **STRONGLY** recommend following these instructions carefully. It's a lot, and will take some time to set up, but your life will be much easier this way in the long run.
+## Features
 
-## Use the Template for This Repository (Don't Clone)
+### Character Management
+- **Create Characters**: Multi-step form for creating characters with customizable attributes, including race, vocation, stats, and more.
+- **View Characters**: A character summary page displaying detailed information about all characters associated with a user.
+- **Update Characters**: Modify attributes, skills, and other details of existing characters (planned).
+- **Delete Characters**: Remove characters and their associated data with confirmation and seamless UI updates.
 
-- Don't Fork or Clone. Instead, click the `Use this Template` button, and make a copy to your personal account. Make the project `PUBLIC`!
+### User Authentication
+- Secure user authentication for personalized character data.
+- Association of characters with specific users.
 
-## Prerequisites
+### Data Handling
+- **Attributes**: Character stats like HP, strength, agility, intelligence, and charisma.
+- **Complex Data**: Lists of spells, skills, weapons, equipment, and micro-stats presented in an organized, readable format.
+- **Dynamic Updates**: Attributes and abilities dynamically adjusted based on race and vocation selections.
 
-Before you get started, make sure you have the following software installed on your computer:
+### Responsive UI
+- Styled using Emotion CSS with a consistent theme.
+- Integrated Bootstrap components for responsive and accessible design.
+- Dynamic updates for better user experience.
 
-- [Node.js](https://nodejs.org/en)
-- [PostgreSQL](https://www.postgresql.org)
-- [Nodemon](https://nodemon.io)
+## Tech Stack
 
-## Create Database and Table
+### Frontend
+- **React**: Component-based architecture for building dynamic and interactive UI.
+- **Emotion**: CSS-in-JS library for flexible and scalable styling.
+- **React-Bootstrap**: Pre-styled components for faster UI development.
+- **Redux**: State management for user and character data.
 
-Create a new database called `prime_app` and create a `user` table:
+### Backend
+- **Node.js**: Server-side JavaScript runtime.
+- **Express**: Lightweight web application framework.
+- **PostgreSQL**: Relational database for persistent data storage.
 
-```SQL
-CREATE TABLE "user" (
-    "id" SERIAL PRIMARY KEY,
-    "username" VARCHAR (80) UNIQUE NOT NULL,
-    "password" VARCHAR (1000) NOT NULL
-);
-```
+### Deployment
+- Local development environment using `npm` or `yarn`.
+- Production-ready server with robust error handling.
 
-If you would like to name your database something else, you will need to change `prime_app` to the name of your new database name in `server/modules/pool.js`.
+## Installation
 
-## Development Setup Instructions
+### Prerequisites
+- Node.js v14+ installed
+- PostgreSQL database installed and running
 
-- Run `npm install`.
-    - Be sure to take stock of `package.json` to see which dependencies you'll need to add.
-- Create a `.env` file at the root of the project and paste this line into the file:
+### Steps
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/lords-legends-character-manager.git
+   cd lords-legends-character-manager
+Install dependencies:
 
-```plaintext
-SERVER_SESSION_SECRET=superDuperSecret
-```
+bash
+Copy code
+npm install
+Set up environment variables: Create a .env file in the root directory with the following:
 
-While you're in your new `.env` file, take the time to replace `superDuperSecret` with some long random string like `25POUbVtx6RKVNWszd9ERB9Bb6` to keep your application secure. Here's a site that can help you: [Password Generator Plus](https://passwordsgenerator.net). If you don't do this step, create a secret with less than eight characters, or leave it as `superDuperSecret`, you will get a warning.
+plaintext
+Copy code
+PORT=5001
+DATABASE_URL=postgres://username:password@localhost:5432/your-database-name
+Set up the database: Run the SQL scripts in the /database folder to create tables and seed data if necessary.
 
-- Start postgres if not running already by using opening up the [Postgres.app](https://postgresapp.com), or if using [Homebrew](https://brew.sh) you can use the command `brew services start postgresql`.
-- Run `npm run server` to start the server.
-- Run `npm run client` to start the client.
-- Navigate to `localhost:5173`.
+Start the server:
 
-## Debugging
+bash
+Copy code
+npm run dev
+Access the application: Open your browser and navigate to http://localhost:3000.
 
-To debug, you will need to run the client-side separately from the server. Start the client by running the command `npm run client`. Start the debugging server by selecting the Debug button.
+Usage
+Creating Characters
+Navigate to the "Create Character" section.
+Fill out the form with your desired attributes, including race, vocation, and other stats.
+Submit the form to save the character to your account.
+Managing Characters
+View all characters on the "Character Summary" page.
+Delete a character by clicking the Delete button on its card.
+File Structure
+plaintext
+Copy code
+lords-legends-character-manager/
+├── client/               # React frontend
+│   ├── components/       # Reusable UI components
+│   ├── pages/            # Main page components
+│   ├── styles/           # Theme and Emotion CSS
+│   └── App.js            # Main application file
+├── server/               # Express backend
+│   ├── routes/           # API routes
+│   ├── data/             # Static data (e.g., races, vocations)
+│   ├── modules/          # Middleware and utilities
+│   └── index.js          # Server entry point
+├── database/             # SQL scripts for database setup
+├── README.md             # Project documentation
+├── package.json          # Node.js dependencies and scripts
+└── .env                  # Environment variables
+Contributing
+Contributions are welcome! Please follow these steps:
 
-![VSCode Toolbar](documentation/images/vscode-toolbar.png)
+Fork the repository.
+Create a new branch:
+bash
+Copy code
+git checkout -b feature-name
+Commit your changes:
+bash
+Copy code
+git commit -m "Description of changes"
+Push to the branch:
+bash
+Copy code
+git push origin feature-name
+Open a pull request on GitHub.
+License
+This project is licensed under the MIT License. See the LICENSE file for more information.
 
-Then make sure `Launch Program` is selected from the dropdown, then click the green play arrow.
-
-![VSCode Debug Bar](documentation/images/vscode-debug-bar.png)
-
-## Testing Routes with Postman
-
-To use Postman with this repo, you will need to set up requests in Postman to register a user and login a user at a minimum.
-
-Keep in mind that once you using the login route, Postman will manage your session cookie for you just like a browser, ensuring it is sent with each subsequent request. If you delete the `localhost` cookie in Postman, it will effectively log you out.
-
-1. Run `npm run server` to start the server.
-2. Import the sample routes JSON file [v2](./PostmanPrimeSoloRoutesv2.json) by clicking `Import` in Postman. Select the file.
-3. Click `Collections` and `Send` the following three calls in order:
-   1. `POST /api/user/register` registers a new user, see body to change username/password.
-   2. `POST /api/user/login` will login a user, see body to change username/password.
-   3. `GET /api/user` will get user information, by default it's not very much.
-
-After running the login route above, you can try any other route you've created that requires a logged in user!
-
-## Production Build
-
-Before pushing to Heroku, run `npm run build` in terminal. This will create a build folder that contains the code Heroku will be pointed at. You can test this build by typing `npm start`. Keep in mind that `npm start` will let you preview the production build but will **not** auto update.
-
-- Start postgres if not running already by using opening up the [Postgres.app](https://postgresapp.com), or if using [Homebrew](https://brew.sh) you can use the command `brew services start postgresql`.
-- Run `npm start`.
-- Navigate to `localhost:5173`.
-
-## Lay of the Land
-
-There are a few videos linked below that show a walkthrough the client and sever setup to help acclimatize to the boilerplate. Please take some time to watch the videos in order to get a better understanding of what the boilerplate is like.
-
-- [Initial Set](https://vimeo.com/453297271)
-- [Server Walkthrough](https://vimeo.com/453297212)
-- [Client Walkthrough](https://vimeo.com/453297124)
-
-Directory Structure:
-
-- `src/` contains the React application.
-- `public/` contains static assets for the client-side.
-- `build/` after you build the project, contains the transpiled code from `src/` and `public/` that will be viewed on the production site.
-- `server/` contains the Express App.
-
-This code is also heavily commented. We recommend reading through the comments, getting a lay of the land, and becoming comfortable with how the code works before you start making too many changes. If you're wondering where to start, consider reading through component file comments in the following order:
-
-- src/components
-  - App/App
-  - Footer/Footer
-  - Nav/Nav
-  - AboutPage/AboutPage
-  - InfoPage/InfoPage
-  - UserPage/UserPage
-  - LoginPage/LoginPage
-  - RegisterPage/RegisterPage
-  - LogOutButton/LogOutButton
-  - ProtectedRoute/ProtectedRoute
-
-## Deployment
-
-1. Create a new Heroku project.
-1. Link the Heroku project to the project GitHub Repo.
-1. Create an Heroku Postgres database.
-1. Connect to the Heroku Postgres database from Postico.
-1. Create the necessary tables.
-1. Add an environment variable for `SERVER_SESSION_SECRET` with a nice random string for security.
-1. In the deploy section, select manual deploy.
-
-## Update Documentation
-
-Customize this ReadMe and the code comments in this project to read less like a starter repo and more like a project. Here is an example: https://gist.github.com/PurpleBooth/109311bb0361f32d87a2.
+Acknowledgments
+Bootstrap: For responsive components and grid system.
+Emotion: For CSS-in-JS styling.
+Redux: For efficient state management.
+RPG inspiration: Thanks to all RPG creators for fueling our imagination!
