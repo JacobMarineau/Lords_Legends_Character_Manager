@@ -21,6 +21,8 @@ const CharacterSheet = () => {
   const [newEquipment, setNewEquipment] = useState({ name: '', type: '', description: '' });
   const [newLanguage, setNewLanguage] = useState('');
 
+
+
   // Styling
   const containerStyle = css`
     background: ${theme.colors.offWhiteBackground};
@@ -79,6 +81,20 @@ const playerCardStyle = css`
   box-shadow: 0px 2px 4px ${theme.colors.boxShadow};
   text-shadow: ${theme.effects.textDropShadow};
 `;
+
+// const editableTextStyle = css`
+//   padding: 2px 4px;
+//   border: none;
+//   border-bottom: 1px dashed ${theme.colors.trim};
+//   background: none;
+//   color: ${theme.colors.offWhiteBackground};
+//   text-align: center;
+//   &:focus {
+//     outline: none;
+//     border-bottom: 1px solid ${theme.colors.trim};
+//   }
+// `;
+
 const fetchCharacterData = async () => {
     try {
       const res = await axios.get(`/api/characters/${characterId}`);
@@ -90,6 +106,7 @@ const fetchCharacterData = async () => {
       setLoading(false);
     }
   };
+
 useEffect(() => {
   
     fetchCharacterData();
@@ -405,32 +422,251 @@ useEffect(() => {
   <Form>
     {/* Character Basic Info */}
     <h4>Basic Information</h4>
-    <Row>
-      <Col md={6}>
-        <Form.Group controlId="characterName">
-          <Form.Label>Name</Form.Label>
-          <Form.Control
-            type="text"
-            defaultValue={character?.character_name}
-            onChange={(e) => setCharacterUpdates({ ...characterUpdates, name: e.target.value })}
-          />
-        </Form.Group>
-      </Col>
-      <Col md={6}>
-        <Form.Group controlId="characterRace">
-          <Form.Label>Race</Form.Label>
-          <Form.Control
-            type="text"
-            defaultValue={character?.race}
-            onChange={(e) => setCharacterUpdates({ ...characterUpdates, race: e.target.value })}
-          />
-        </Form.Group>
-      </Col>
-    </Row>
+<Row css={cardStyle}>
+  <Col md={6}>
+    <Form.Group controlId="characterName">
+      <Form.Label>Name</Form.Label>
+      <Form.Control
+        type="text"
+        defaultValue={character?.character_name}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            character_name: e.target.value,
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={6}>
+    <Form.Group controlId="characterRace">
+      <Form.Label>Race</Form.Label>
+      <Form.Control
+        type="text"
+        defaultValue={character?.race}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            race: e.target.value,
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={6}>
+    <Form.Group controlId="characterVocation">
+      <Form.Label>Vocation</Form.Label>
+      <Form.Control
+        type="text"
+        defaultValue={character?.vocation}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            vocation: e.target.value,
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={6}>
+    <Form.Group controlId="characterSpecialty">
+      <Form.Label>Specialty</Form.Label>
+      <Form.Control
+        type="text"
+        defaultValue={character?.specialty || 'N/A'}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            specialty: e.target.value,
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={6}>
+    <Form.Group controlId="characterHeight">
+      <Form.Label>Height</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.height}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            height: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={6}>
+    <Form.Group controlId="characterAge">
+      <Form.Label>Age</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.age}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            age: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={6}>
+    <Form.Group controlId="characterMaxHP">
+      <Form.Label>Max HP</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.max_hp}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            max_hp: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={6}>
+    <Form.Group controlId="characterCurrentHP">
+      <Form.Label>Current HP</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.current_hp}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            current_hp: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={6}>
+    <Form.Group controlId="characterFocusPoints">
+      <Form.Label>Focus Points</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.focus_points}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            focus_points: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={6}>
+    <Form.Group controlId="characterSoulRank">
+      <Form.Label>Soul Rank</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.soul_rank}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            soul_rank: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={6}>
+    <Form.Group controlId="characterSpeedClass">
+      <Form.Label>Speed Class</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.speed_class}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            speed_class: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={6}>
+    <Form.Group controlId="characterCurrentTHP">
+      <Form.Label>Current Temporary HP</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.current_thp}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            current_thp: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={6}>
+    <Form.Group controlId="characterCurrentAR">
+      <Form.Label>Current Armor Rating</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.current_ar}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            current_ar: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={6}>
+    <Form.Group controlId="characterCurrentOS">
+      <Form.Label>Current Over Shields</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.current_os}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            current_os: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={6}>
+    <Form.Group controlId="characterCurrentMR">
+      <Form.Label>Current Magic Resistance</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.current_mr}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            current_mr: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+</Row>
 
     {/* Major Stats */}
     <h4>Major Stats</h4>
-    <Row>
+    <Row css={cardStyle}>
       {['strength', 'dexterity', 'intelligence', 'charisma', 'vitality', 'willpower', 'arcana', 'ferocity'].map((stat) => (
         <Col md={3} key={stat}>
           <Form.Group controlId={stat}>
@@ -447,7 +683,7 @@ useEffect(() => {
 
     {/* Minor Stats */}
     <h4>Minor Stats</h4>
-    <Row>
+    <Row css={cardStyle}>
       {['acrobatics', 'athletics', 'agility', 'lifting', 'sleight_of_hand', 'stealth', 'medicine', 'weapon_mastery', 'carving', 'history', 'wisdom', 'science', 'technology', 'foraging', 'persuasion', 'deception', 'bargaining', 'performance', 'charm', 'endurance', 'resistance'].map((stat) => (
         <Col md={4} key={stat}>
           <Form.Group controlId={stat}>
@@ -464,7 +700,7 @@ useEffect(() => {
 
     {/* New Weapon */}
     <h4>Add New Weapon</h4>
-    <Row>
+    <Row css={cardStyle}>
       <Col md={4}>
         <Form.Group controlId="newWeaponName">
           <Form.Label>Weapon Name</Form.Label>
@@ -500,7 +736,7 @@ useEffect(() => {
 
     {/* New Skill */}
     <h4>Add New Skill</h4>
-    <Row>
+    <Row css={cardStyle}>
       <Col md={3}>
         <Form.Group controlId="newSkillName">
           <Form.Label>Skill Name</Form.Label>
@@ -556,7 +792,7 @@ useEffect(() => {
 
     {/* New Spell */}
     <h4>Add New Spell</h4>
-    <Row>
+    <Row css={cardStyle}>
       <Col md={3}>
         <Form.Group controlId="newSpellName">
           <Form.Label>Spell Name</Form.Label>
@@ -612,7 +848,7 @@ useEffect(() => {
 
     {/* New Equipment */}
     <h4>Add New Equipment</h4>
-    <Row>
+    <Row css={cardStyle}>
       <Col md={4}>
         <Form.Group controlId="newEquipmentName">
           <Form.Label>Equipment Name</Form.Label>
@@ -648,7 +884,7 @@ useEffect(() => {
 
     {/* New Language */}
     <h4>Add New Language</h4>
-    <Row>
+    <Row css={cardStyle}>
       <Col md={4}>
         <Form.Group controlId="newLanguageName">
           <Form.Label>Language</Form.Label>

@@ -68,14 +68,14 @@ const buttonStyle = css`
 
 
 const labelStyle = css`
-  color: ${theme.colors.highContrastTextLight};
+  color: ${theme.colors.highContrastTextDark};
   font-weight: ${theme.typography.weights.bold};
   margin-bottom: ${theme.spacing.small};
   text-shadow: ${theme.effects.textDropShadow};
 `;
 
 const headerStyle = css`
-  color: ${theme.colors.highContrastTextLight};
+  color: ${theme.colors.highContrastTextDark};
   font-weight: ${theme.typography.weights.bold};
   margin-bottom: ${theme.spacing.medium};
   text-shadow: ${theme.effects.textDropShadow};
