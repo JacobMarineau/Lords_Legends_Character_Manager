@@ -250,19 +250,152 @@ useEffect(() => {
         <Col><p css={textStyle}><strong>Height:</strong> {character.height}</p></Col>
         <Col><p css={textStyle}><strong>Age:</strong> {character.age}</p></Col>
       </Row>
-      <Row>
-        <Col><p css={textStyle}><strong>Max HP:</strong> {character.max_hp}</p></Col>
-        <Col><p css={textStyle}><strong>Current HP:</strong> {character.current_hp}</p></Col>
-        <Col><p css={textStyle}><strong>Focus Points:</strong> {character.focus_points}</p></Col>
-        <Col><p css={textStyle}><strong>Soul Rank:</strong> {character.soul_rank}</p></Col>
-        <Col><p css={textStyle}><strong>Speed Class:</strong> {character.speed_class}</p></Col>
-      </Row>
-      <Row>
-        <Col><p css={textStyle}><strong>Current Temporary HP:</strong> {character.current_thp}</p></Col>
-        <Col><p css={textStyle}><strong>Current Armor Rating:</strong> {character.current_ar}</p></Col>
-        <Col><p css={textStyle}><strong>Current Over Shields:</strong> {character.current_os}</p></Col>
-        <Col><p css={textStyle}><strong>Current Magic Resistance:</strong> {character.current_mr}</p></Col>
-      </Row>
+      <Row css={cardStyle}>
+  <Col md={4}>
+    <Form.Group controlId="maxHP">
+      <Form.Label>Max HP</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.max_hp}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            max_hp: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={4}>
+    <Form.Group controlId="currentHP">
+      <Form.Label>Current HP</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.current_hp}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            current_hp: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={4}>
+    <Form.Group controlId="focusPoints">
+      <Form.Label>Focus Points</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.focus_points}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            focus_points: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={4}>
+    <Form.Group controlId="soulRank">
+      <Form.Label>Soul Rank</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.soul_rank}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            soul_rank: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={4}>
+    <Form.Group controlId="speedClass">
+      <Form.Label>Speed Class</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.speed_class}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            speed_class: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={4}>
+    <Form.Group controlId="currentTHP">
+      <Form.Label>Current Temporary HP</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.current_thp}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            current_thp: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={4}>
+    <Form.Group controlId="currentAR">
+      <Form.Label>Current Armor Rating</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.current_ar}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            current_ar: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={4}>
+    <Form.Group controlId="currentOS">
+      <Form.Label>Current Over Shields</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.current_os}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            current_os: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+
+  <Col md={4}>
+    <Form.Group controlId="currentMR">
+      <Form.Label>Current Magic Resistance</Form.Label>
+      <Form.Control
+        type="number"
+        defaultValue={character?.current_mr}
+        onChange={(e) =>
+          setCharacterUpdates({
+            ...characterUpdates,
+            current_mr: parseInt(e.target.value),
+          })
+        }
+      />
+    </Form.Group>
+  </Col>
+</Row>
+
     </Card.Body>
   </Card>
 
