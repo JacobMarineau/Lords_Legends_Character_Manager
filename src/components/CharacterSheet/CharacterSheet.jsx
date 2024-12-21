@@ -412,7 +412,7 @@ useEffect(() => {
                         </p>
                       </Col>
                     ))}
-                    {['willpower', 'arcana', 'ferocity'].map((spec) => (
+                    {['extended_willpower', 'innate_willpower', 'arcana', 'ferocity'].map((spec) => (
                       <Col md={6} key={spec}>
                         <p>
                           <strong>{spec.charAt(0).toUpperCase() + spec.slice(1)}: </strong> 

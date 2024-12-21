@@ -1018,4 +1018,50 @@ router.delete("/:character_id/micro-stats/:micro_stat_id", async (req, res) => {
   }
 });
 
+// ====== PUT /api/characters/:characterId/skills/:skillId ======
+router.put("/:characterId/skills/:skillId", async (req, res) => {
+  const { characterId, skillId } = req.params; // Get characterId and skillId from route parameters
+  const { skill_name, damage_die, action_type, cost, description } = req.body; // Get new skill details from request body
+
+  try {
+    const query = `
+      UPDATE skills
+      SET 
+        skill_name = COALESCE($1, skill_name),
+        damage_die = COALESCE($2, damage_die),
+        action_type = COALESCE($3, action_type),
+        cost = COALESCE($4, cost),
+        description = COALESCE($5, description)
+      WHERE id = $6 AND character_id = $7
+      RETURNING *;
+    `;
+
+    const values = [
+      skill_name,
+      damage_die,
+      action_type,
+      cost,
+      description,
+      skillId,
+      characterId,
+    ];
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Skill not found for this character." });
+    }
+
+    res.status(200).json({
+      message: "Skill updated successfully.",
+      skill: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error updating skill:", error);
+    res.status(500).json({ message: "Error updating skill." });
+  }
+});
+
 module.exports = router;
