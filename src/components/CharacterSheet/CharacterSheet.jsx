@@ -20,7 +20,25 @@ const CharacterSheet = () => {
   const [newSpell, setNewSpell] = useState({ spell_name: '', damage_die: '', cost: '', action_type: '', description: '' });
   const [newEquipment, setNewEquipment] = useState({ name: '', type: '', description: '' });
   const [newLanguage, setNewLanguage] = useState('');
-
+  const [editingSkills, setEditingSkills] = useState([]);
+  
+  // Toggles edit mode for a specific skill by index
+  const toggleEditSkill = (index) => {
+    const updatedEditingSkills = [...editingSkills];
+    updatedEditingSkills[index] = !updatedEditingSkills[index];
+    setEditingSkills(updatedEditingSkills);
+  };
+  
+  // Save updated skill data
+  const saveSkillUpdates = async (index, skill) => {
+    try {
+      await handleSaveSkill(skill.id, skill);
+      toggleEditSkill(index); // Exit edit mode upon saving
+    } catch (err) {
+      console.error("Error saving skill:", err);
+    }
+  };
+  
 
 
   // Styling
@@ -99,6 +117,7 @@ const fetchCharacterData = async () => {
     try {
       const res = await axios.get(`/api/characters/${characterId}`);
       setCharacter(res.data);
+      setEditingSkills(res.data.skills.map(() => false));
       console.log("Fetched character data:", res.data);
       setLoading(false);
     } catch (err) {
@@ -162,8 +181,41 @@ useEffect(() => {
       console.error("Error saving character changes:", error);
       alert("There was an error saving your changes. Please try again.");
     }
+
+    
   };
+
+  const handleSkillChange = (index, field, value) => {
+    const updatedSkills = [...character.skills];
+    
+    updatedSkills[index] = { ...updatedSkills[index], [field]: value };
+    setCharacter({ ...character, skills: updatedSkills });
+  };
+
   
+  const handleSaveSkill = async (skillId, updatedSkill) => {
+    try {
+      const response = await fetch(`/api/characters/skills/${skillId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedSkill),
+      });
+  
+      if (response.ok) {
+        alert('Skill updated successfully!');
+      } else {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText}`);
+      }
+    } catch (error) {
+      console.error('Error updating skill:', error.message);
+      alert('Failed to update skill. Please try again.');
+    }
+  };
+
+
+  
+
 
   const handleAddItem = async (url, data, successMessage) => {
     try {
@@ -430,7 +482,7 @@ useEffect(() => {
               ))}
 
         {/* Skills */}
-{character.skills && character.skills.length > 0 && (
+        {character.skills && character.skills.length > 0 && (
   <Card css={cardStyle} className="mb-3">
     <Card.Header as="h3">Skills</Card.Header>
     <Card.Body>
@@ -439,11 +491,95 @@ useEffect(() => {
           <Col md={6} key={`skill-${index}`}>
             <Card css={playerCardStyle} className="mb-3">
               <Card.Body>
-                <p css={textStyle}><strong>Skill Name:</strong> {skill.skill_name}</p>
-                {skill.description && <p css={textStyle}><strong>Description:</strong> {skill.description}</p>}
-                {skill.damage_die && <p css={textStyle}><strong>Damage Die:</strong> {skill.damage_die}</p>}
-                {skill.action_type && <p css={textStyle}><strong>Action Type:</strong> {skill.action_type}</p>}
-                {skill.cost && <p css={textStyle}><strong>Cost:</strong> {skill.cost}</p>}
+                {!editingSkills[index] ? (
+                  <>
+                    <p css={textStyle}><strong>Skill Name:</strong> {skill.skill_name || 'N/A'}</p>
+                    <p css={textStyle}><strong>Description:</strong> {skill.description || 'N/A'}</p>
+                    <p css={textStyle}><strong>Damage Die:</strong> {skill.damage_die || 'N/A'}</p>
+                    <p css={textStyle}><strong>Action Type:</strong> {skill.action_type || 'N/A'}</p>
+                    <p css={textStyle}><strong>Cost:</strong> {skill.cost || 'N/A'}</p>
+                    <Button
+                      css={buttonStyle}
+                      onClick={() => toggleEditSkill(index)}
+                      className="mt-2"
+                    >
+                      Edit Skill
+                    </Button>
+                  </>
+                ) : (
+                  <Form>
+                    <Form.Group controlId={`skillName-${index}`}>
+                      <Form.Label css={textStyle}><strong>Skill Name:</strong></Form.Label>
+                      <Form.Control
+                        type="text"
+                        defaultValue={skill.skill_name}
+                        onChange={(e) => 
+                          handleSkillChange(index, 'skill_name', e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Form.Group controlId={`description-${index}`}>
+                      <Form.Label css={textStyle}><strong>Description:</strong></Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={2}
+                        defaultValue={skill.description}
+                        onChange={(e) =>
+                          handleSkillChange(index, 'description', e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Form.Group controlId={`damageDie-${index}`}>
+                      <Form.Label css={textStyle}><strong>Damage Die:</strong></Form.Label>
+                      <Form.Control
+                        type="text"
+                        defaultValue={skill.damage_die}
+                        onChange={(e) =>
+                          handleSkillChange(index, 'damage_die', e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Form.Group controlId={`actionType-${index}`}>
+                      <Form.Label css={textStyle}><strong>Action Type:</strong></Form.Label>
+                      <Form.Control
+                        type="text"
+                        defaultValue={skill.action_type}
+                        onChange={(e) =>
+                          handleSkillChange(index, 'action_type', e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Form.Group controlId={`cost-${index}`}>
+                      <Form.Label css={textStyle}><strong>Cost:</strong></Form.Label>
+                      <Form.Control
+                        type="text"
+                        defaultValue={skill.cost}
+                        onChange={(e) =>
+                          handleSkillChange(index, 'cost', e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Button
+  css={buttonStyle}
+  onClick={() => {
+    console.log("Updating skill:", skill); // Add this line
+    saveSkillUpdates(index, skill);
+  }}
+  className="mt-2"
+>
+  Save Changes
+</Button>
+
+                    <Button
+                      css={buttonStyle}
+                      variant="secondary"
+                      onClick={() => toggleEditSkill(index)}
+                      className="mt-2 ms-2"
+                    >
+                      Cancel
+                    </Button>
+                  </Form>
+                )}
               </Card.Body>
             </Card>
           </Col>
@@ -452,6 +588,7 @@ useEffect(() => {
     </Card.Body>
   </Card>
 )}
+
 
        {/* Spells */}
 {character.spells && character.spells.length > 0 && (
@@ -800,7 +937,7 @@ useEffect(() => {
     {/* Major Stats */}
     <h4>Major Stats</h4>
     <Row css={cardStyle}>
-      {['strength', 'dexterity', 'intelligence', 'charisma', 'vitality', 'willpower', 'arcana', 'ferocity'].map((stat) => (
+      {['strength', 'dexterity', 'intelligence', 'charisma', 'vitality', 'innate_willpower', 'extended_willpower', 'arcana', 'ferocity'].map((stat) => (
         <Col md={3} key={stat}>
           <Form.Group controlId={stat}>
             <Form.Label>{stat.charAt(0).toUpperCase() + stat.slice(1)}</Form.Label>
