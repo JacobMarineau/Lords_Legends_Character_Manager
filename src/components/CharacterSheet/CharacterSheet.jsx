@@ -562,7 +562,7 @@ useEffect(() => {
                     <Button
   css={buttonStyle}
   onClick={() => {
-    console.log("Updating skill:", skill); // Add this line
+    console.log("Updating skill:", skill); 
     saveSkillUpdates(index, skill);
   }}
   className="mt-2"
