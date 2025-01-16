@@ -176,7 +176,7 @@ router.get("/:id", async (req, res) => {
           JSON_AGG(DISTINCT jsonb_build_object('spell_name', sp.spell_name, 'damage_die', sp.damage_die, 'cost', sp.cost, 'action_type', sp.action_type)) AS spells,
           JSON_AGG(DISTINCT jsonb_build_object('weapon_name', w.weapon_name, 'damage_die', w.damage_die, 'description', w.description)) AS weapons,
           JSON_AGG(DISTINCT jsonb_build_object('name', eq.name, 'type', eq.type, 'description', eq.description)) AS equipment,
-          JSON_AGG(DISTINCT jsonb_build_object('skill_name', sk.skill_name, 'description', sk.description, 'action_type', sk.action_type, 'damage_die', sk.damage_die, 'cost', sk.cost)) AS skills
+          JSON_AGG(DISTINCT jsonb_build_object('id', sk.id, 'skill_name', sk.skill_name, 'description', sk.description, 'action_type', sk.action_type, 'damage_die', sk.damage_die, 'cost', sk.cost)) AS skills
       FROM characters c
       LEFT JOIN micro_stats ms ON c.id = ms.character_id
       LEFT JOIN languages lang ON c.id = lang.character_id
@@ -239,7 +239,7 @@ router.get("/:id/skills", async (req, res) => {
   const characterId = req.params.id;
   try {
     const query = `
-      SELECT sk.skill_name, sk.damage_die, sk.description, sk.action_type, sk.cost
+      SELECT sk.id, sk.skill_name, sk.damage_die, sk.description, sk.action_type, sk.cost
       FROM skills sk
       WHERE sk.character_id = $1;
     `;

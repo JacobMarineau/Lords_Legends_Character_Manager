@@ -31,13 +31,15 @@ const CharacterSheet = () => {
   
   // Save updated skill data
   const saveSkillUpdates = async (index, skill) => {
+    console.log("Updating skill:", skill);
     try {
-      await handleSaveSkill(skill.id, skill);
-      toggleEditSkill(index); // Exit edit mode upon saving
+      await handleSaveSkill(skill.id, skill); 
+      toggleEditSkill(index); 
     } catch (err) {
       console.error("Error saving skill:", err);
     }
   };
+  
   
 
 
@@ -127,9 +129,11 @@ const fetchCharacterData = async () => {
   };
 
 useEffect(() => {
-  
+
+
     fetchCharacterData();
   }, [characterId]);
+  
 
   const handleSaveChanges = async () => {
     try {
@@ -182,8 +186,9 @@ useEffect(() => {
       alert("There was an error saving your changes. Please try again.");
     }
 
-    
+  
   };
+
 
   const handleSkillChange = (index, field, value) => {
     const updatedSkills = [...character.skills];
@@ -195,7 +200,7 @@ useEffect(() => {
   
   const handleSaveSkill = async (skillId, updatedSkill) => {
     try {
-      const response = await fetch(`/api/characters/skills/${skillId}`, {
+      const response = await fetch(`/api/characters/${characterId}/skills/${skillId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedSkill),
@@ -212,10 +217,8 @@ useEffect(() => {
       alert('Failed to update skill. Please try again.');
     }
   };
-
-
   
-
+  
 
   const handleAddItem = async (url, data, successMessage) => {
     try {
@@ -488,7 +491,7 @@ useEffect(() => {
     <Card.Body>
       <Row>
         {character.skills.map((skill, index) => (
-          <Col md={6} key={`skill-${index}`}>
+           <Col md={6} key={`skill-${skill.id || index}`}>
             <Card css={playerCardStyle} className="mb-3">
               <Card.Body>
                 {!editingSkills[index] ? (
