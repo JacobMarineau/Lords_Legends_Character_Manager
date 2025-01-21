@@ -21,6 +21,10 @@ const CharacterSheet = () => {
   const [newEquipment, setNewEquipment] = useState({ name: '', type: '', description: '' });
   const [newLanguage, setNewLanguage] = useState('');
   const [editingSkills, setEditingSkills] = useState([]);
+  const [editingSpells, setEditingSpells] = useState([]);
+  const [editingWeapons, setEditingWeapons] = useState([]);
+  const [editingEquipment, setEditingEquipment] = useState([]);
+  
   
   // Toggles edit mode for a specific skill by index
   const toggleEditSkill = (index) => {
@@ -189,13 +193,40 @@ useEffect(() => {
   
   };
 
-
+ //====== Skill Change ======
   const handleSkillChange = (index, field, value) => {
     const updatedSkills = [...character.skills];
     
     updatedSkills[index] = { ...updatedSkills[index], [field]: value };
     setCharacter({ ...character, skills: updatedSkills });
   };
+
+  //====== Spell Change ======
+  const handleSpellChange = (index, field, value) => {
+    const updatedSpells = [...character.spells];
+  
+    updatedSpells[index] = { ...updatedSpells[index], [field]: value };
+    setCharacter({ ...character, spells: updatedSpells });
+  };
+
+  //====== Weapon Change ======
+  const handleWeaponChange = (index, field, value) => {
+    const updatedWeapons = [...character.weapons];
+
+    updatedWeapons[index] = { ...updatedWeapons[index], [field]: value };
+    setCharacter({ ...character, weapons: updatedWeapons });
+  };
+ 
+  //====== Equipment Change ======
+  const handleEquipmentChange = (index, field, value) => {
+    const updatedEquipment = [...character.equipment];
+
+    updatedEquipment[index] = { ...updatedEquipment[index], [field]: value };
+    setCharacter({ ...character, equipment: updatedEquipment });
+  };
+  
+  
+  
 
   
   const handleSaveSkill = async (skillId, updatedSkill) => {
@@ -217,6 +248,96 @@ useEffect(() => {
       alert('Failed to update skill. Please try again.');
     }
   };
+  
+  const handleSaveEquipment = async (equipmentId, updatedEquipment) => {
+    try {
+      const response = await fetch(`/api/characters/${characterId}/equipment/${equipmentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedEquipment),
+      });
+  
+      if (response.ok) {
+        alert("Equipment updated successfully!");
+      } else {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText}`);
+      }
+    } catch (error) {
+      console.error("Error updating equipment:", error.message);
+      alert("Failed to update equipment. Please try again.");
+    }
+  };
+  
+
+  const toggleEditSpell = (index) => {
+    const updatedEditingSpells = [...editingSpells];
+    updatedEditingSpells[index] = !updatedEditingSpells[index];
+    setEditingSpells(updatedEditingSpells);
+  };
+
+  const toggleEditWeapon = (index) => {
+    const updatedEditingWeapons = [...editingWeapons];
+    updatedEditingWeapons[index] = !updatedEditingWeapons[index];
+    setEditingWeapons(updatedEditingWeapons);
+  };
+
+  const toggleEditEquipment = (index) => {
+    const updatedEditingEquipment = [...editingEquipment];
+    updatedEditingEquipment[index] = !updatedEditingEquipment[index];
+    setEditingEquipment(updatedEditingEquipment);
+  };
+  
+  const saveSpellUpdates = async (index, spell) => {
+    try {
+      console.log("Updating spell:", spell);
+      await handleSaveSpell(spell.id, spell); // Implement the `handleSaveSpell` function
+      toggleEditSpell(index); // Exit edit mode after saving
+    } catch (err) {
+      console.error("Error saving spell:", err);
+    }
+  };
+  
+  const handleSaveSpell = async (spellId, updatedSpell) => {
+    try {
+      const response = await fetch(`/api/characters/${characterId}/spells/${spellId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedSpell),
+      });
+  
+      if (response.ok) {
+        alert("Spell updated successfully!");
+      } else {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText}`);
+      }
+    } catch (error) {
+      console.error("Error updating spell:", error.message);
+      alert("Failed to update spell. Please try again.");
+    }
+  };
+
+  const handleSaveWeapon = async (weaponId, updatedWeapon) => {
+    try {
+      const response = await fetch(`/api/characters/${characterId}/weapons/${weaponId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedWeapon),
+      });
+  
+      if (response.ok) {
+        alert("Weapon updated successfully!");
+      } else {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText}`);
+      }
+    } catch (error) {
+      console.error("Error updating weapon:", error.message);
+      alert("Failed to update weapon. Please try again.");
+    }
+  };
+  
   
   
 
@@ -594,20 +715,100 @@ useEffect(() => {
 
 
        {/* Spells */}
-{character.spells && character.spells.length > 0 && (
+       {character.spells && character.spells.length > 0 && (
   <Card css={cardStyle} className="mb-3">
     <Card.Header as="h3">Spells</Card.Header>
     <Card.Body>
       <Row>
         {character.spells.map((spell, index) => (
-          <Col md={6} key={`spell-${index}`}>
+          <Col md={6} key={`spell-${spell.id || index}`}>
             <Card css={playerCardStyle} className="mb-3">
               <Card.Body>
-                <p css={textStyle}><strong>Spell Name:</strong> {spell.spell_name}</p>
-                {spell.description && <p css={textStyle}><strong>Description:</strong> {spell.description}</p>}
-                {spell.damage_die && <p css={textStyle}><strong>Damage Die:</strong> {spell.damage_die}</p>}
-                {spell.action_type && <p css={textStyle}><strong>Action Type:</strong> {spell.action_type}</p>}
-                {spell.cost && <p css={textStyle}><strong>Cost:</strong> {spell.cost}</p>}
+                {!editingSpells[index] ? (
+                  <>
+                    <p css={textStyle}><strong>Spell Name:</strong> {spell.spell_name || 'N/A'}</p>
+                    <p css={textStyle}><strong>Description:</strong> {spell.description || 'N/A'}</p>
+                    <p css={textStyle}><strong>Damage Die:</strong> {spell.damage_die || 'N/A'}</p>
+                    <p css={textStyle}><strong>Action Type:</strong> {spell.action_type || 'N/A'}</p>
+                    <p css={textStyle}><strong>Cost:</strong> {spell.cost || 'N/A'}</p>
+                    <Button
+                      css={buttonStyle}
+                      onClick={() => toggleEditSpell(index)}
+                      className="mt-2"
+                    >
+                      Edit Spell
+                    </Button>
+                  </>
+                ) : (
+                  <Form>
+                    <Form.Group controlId={`spellName-${index}`}>
+                      <Form.Label css={textStyle}><strong>Spell Name:</strong></Form.Label>
+                      <Form.Control
+                        type="text"
+                        defaultValue={spell.spell_name}
+                        onChange={(e) =>
+                          handleSpellChange(index, 'spell_name', e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Form.Group controlId={`description-${index}`}>
+                      <Form.Label css={textStyle}><strong>Description:</strong></Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={2}
+                        defaultValue={spell.description}
+                        onChange={(e) =>
+                          handleSpellChange(index, 'description', e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Form.Group controlId={`damageDie-${index}`}>
+                      <Form.Label css={textStyle}><strong>Damage Die:</strong></Form.Label>
+                      <Form.Control
+                        type="text"
+                        defaultValue={spell.damage_die}
+                        onChange={(e) =>
+                          handleSpellChange(index, 'damage_die', e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Form.Group controlId={`actionType-${index}`}>
+                      <Form.Label css={textStyle}><strong>Action Type:</strong></Form.Label>
+                      <Form.Control
+                        type="text"
+                        defaultValue={spell.action_type}
+                        onChange={(e) =>
+                          handleSpellChange(index, 'action_type', e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Form.Group controlId={`cost-${index}`}>
+                      <Form.Label css={textStyle}><strong>Cost:</strong></Form.Label>
+                      <Form.Control
+                        type="text"
+                        defaultValue={spell.cost}
+                        onChange={(e) =>
+                          handleSpellChange(index, 'cost', e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Button
+                      css={buttonStyle}
+                      onClick={() => saveSpellUpdates(index, spell)}
+                      className="mt-2"
+                    >
+                      Save Changes
+                    </Button>
+                    <Button
+                      css={buttonStyle}
+                      variant="secondary"
+                      onClick={() => toggleEditSpell(index)}
+                      className="mt-2 ms-2"
+                    >
+                      Cancel
+                    </Button>
+                  </Form>
+                )}
               </Card.Body>
             </Card>
           </Col>
@@ -619,18 +820,82 @@ useEffect(() => {
 
 
              {/* Weapons */}
-{character.weapons && character.weapons.length > 0 && (
+             {character.weapons && character.weapons.length > 0 && (
   <Card css={cardStyle} className="mb-3">
     <Card.Header as="h3">Weapons</Card.Header>
     <Card.Body>
       <Row>
         {character.weapons.map((weapon, index) => (
-          <Col md={6} key={index}>
+          <Col md={6} key={`weapon-${index}`}>
             <Card css={playerCardStyle} className="mb-3">
               <Card.Body>
-                <p css={textStyle}><strong>Weapon Name:</strong> {weapon.weapon_name}</p>
-                {weapon.description && <p css={textStyle}><strong>Description:</strong> {weapon.description}</p>}
-                {weapon.damage_die && <p css={textStyle}><strong>Damage Die:</strong> {weapon.damage_die}</p>}
+                {!editingWeapons[index] ? (
+                  <>
+                    <p css={textStyle}><strong>Weapon Name:</strong> {weapon.weapon_name}</p>
+                    <p css={textStyle}><strong>Description:</strong> {weapon.description || 'N/A'}</p>
+                    <p css={textStyle}><strong>Damage Die:</strong> {weapon.damage_die || 'N/A'}</p>
+                    <Button
+                      css={buttonStyle}
+                      onClick={() => toggleEditWeapon(index)}
+                      className="mt-2"
+                    >
+                      Edit Weapon
+                    </Button>
+                  </>
+                ) : (
+                  <Form>
+                    <Form.Group controlId={`weaponName-${index}`}>
+                      <Form.Label css={textStyle}><strong>Weapon Name:</strong></Form.Label>
+                      <Form.Control
+                        type="text"
+                        defaultValue={weapon.weapon_name}
+                        onChange={(e) =>
+                          handleWeaponChange(index, 'weapon_name', e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Form.Group controlId={`description-${index}`}>
+                      <Form.Label css={textStyle}><strong>Description:</strong></Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={2}
+                        defaultValue={weapon.description}
+                        onChange={(e) =>
+                          handleWeaponChange(index, 'description', e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Form.Group controlId={`damageDie-${index}`}>
+                      <Form.Label css={textStyle}><strong>Damage Die:</strong></Form.Label>
+                      <Form.Control
+                        type="text"
+                        defaultValue={weapon.damage_die}
+                        onChange={(e) =>
+                          handleWeaponChange(index, 'damage_die', e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Button
+                      css={buttonStyle}
+                      onClick={() => {
+                        console.log("Updating weapon:", weapon);
+                        handleSaveWeapon(weapon.id, weapon);
+                        toggleEditWeapon(index);
+                      }}
+                      className="mt-2"
+                    >
+                      Save Changes
+                    </Button>
+                    <Button
+                      css={buttonStyle}
+                      variant="secondary"
+                      onClick={() => toggleEditWeapon(index)}
+                      className="mt-2 ms-2"
+                    >
+                      Cancel
+                    </Button>
+                  </Form>
+                )}
               </Card.Body>
             </Card>
           </Col>
@@ -639,6 +904,7 @@ useEffect(() => {
     </Card.Body>
   </Card>
 )}
+
 
               {/* Equipment */}
               {character.equipment && character.equipment.length > 0 && (
@@ -651,9 +917,73 @@ useEffect(() => {
           <Accordion.Body>
             {character.equipment.map((equip, index) => (
               <div key={`equipment-${index}`} css={equipmentItemStyle}>
-                <p><strong>Name:</strong> {equip.name}</p>
-                {equip.type && <p><strong>Type:</strong> {equip.type}</p>}
-                {equip.description && <p><strong>Description:</strong> {equip.description}</p>}
+                {!editingEquipment[index] ? (
+                  <>
+                    <p><strong>Name:</strong> {equip.name || "N/A"}</p>
+                    <p><strong>Type:</strong> {equip.type || "N/A"}</p>
+                    <p><strong>Description:</strong> {equip.description || "N/A"}</p>
+                    <Button
+                      css={buttonStyle}
+                      onClick={() => toggleEditEquipment(index)}
+                      className="mt-2"
+                    >
+                      Edit Equipment
+                    </Button>
+                  </>
+                ) : (
+                  <Form>
+                    <Form.Group controlId={`equipmentName-${index}`}>
+                      <Form.Label><strong>Name:</strong></Form.Label>
+                      <Form.Control
+                        type="text"
+                        defaultValue={equip.name}
+                        onChange={(e) =>
+                          handleEquipmentChange(index, "name", e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Form.Group controlId={`equipmentType-${index}`}>
+                      <Form.Label><strong>Type:</strong></Form.Label>
+                      <Form.Control
+                        type="text"
+                        defaultValue={equip.type}
+                        onChange={(e) =>
+                          handleEquipmentChange(index, "type", e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Form.Group controlId={`equipmentDescription-${index}`}>
+                      <Form.Label><strong>Description:</strong></Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={2}
+                        defaultValue={equip.description}
+                        onChange={(e) =>
+                          handleEquipmentChange(index, "description", e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Button
+                      css={buttonStyle}
+                      onClick={() => {
+                        console.log("Updating equipment:", equip);
+                        handleSaveEquipment(equip.id, equip);
+                        toggleEditEquipment(index);
+                      }}
+                      className="mt-2"
+                    >
+                      Save Changes
+                    </Button>
+                    <Button
+                      css={buttonStyle}
+                      variant="secondary"
+                      onClick={() => toggleEditEquipment(index)}
+                      className="mt-2 ms-2"
+                    >
+                      Cancel
+                    </Button>
+                  </Form>
+                )}
               </div>
             ))}
           </Accordion.Body>
@@ -662,6 +992,7 @@ useEffect(() => {
     </Card.Body>
   </Card>
 )}
+
 
               {/* Languages */}
               {character.languages && character.languages.length > 0 && (

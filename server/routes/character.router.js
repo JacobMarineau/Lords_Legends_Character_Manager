@@ -171,11 +171,11 @@ router.get("/:id", async (req, res) => {
           c.magical_knowledge,
           c.intimidation,
           -- Use JSON_AGG to return these as JSON arrays
-          JSON_AGG(DISTINCT jsonb_build_object('stat_name', ms.stat_name, 'value', COALESCE(ms.value, 0))) AS micro_stats,
+          JSON_AGG(DISTINCT jsonb_build_object('id', ms.id, 'stat_name', ms.stat_name, 'value', COALESCE(ms.value, 0))) AS micro_stats,
           JSON_AGG(DISTINCT lang.language_name) AS languages,
-          JSON_AGG(DISTINCT jsonb_build_object('spell_name', sp.spell_name, 'damage_die', sp.damage_die, 'cost', sp.cost, 'action_type', sp.action_type)) AS spells,
-          JSON_AGG(DISTINCT jsonb_build_object('weapon_name', w.weapon_name, 'damage_die', w.damage_die, 'description', w.description)) AS weapons,
-          JSON_AGG(DISTINCT jsonb_build_object('name', eq.name, 'type', eq.type, 'description', eq.description)) AS equipment,
+          JSON_AGG(DISTINCT jsonb_build_object('id', sp.id, 'spell_name', sp.spell_name, 'damage_die', sp.damage_die, 'cost', sp.cost, 'action_type', sp.action_type, 'description', sp.description)) AS spells,
+          JSON_AGG(DISTINCT jsonb_build_object('id', w.id, 'weapon_name', w.weapon_name, 'damage_die', w.damage_die, 'description', w.description)) AS weapons,
+          JSON_AGG(DISTINCT jsonb_build_object('id', eq.id, 'name', eq.name, 'type', eq.type, 'description', eq.description)) AS equipment,
           JSON_AGG(DISTINCT jsonb_build_object('id', sk.id, 'skill_name', sk.skill_name, 'description', sk.description, 'action_type', sk.action_type, 'damage_die', sk.damage_die, 'cost', sk.cost)) AS skills
       FROM characters c
       LEFT JOIN micro_stats ms ON c.id = ms.character_id
@@ -1061,6 +1061,129 @@ router.put("/:characterId/skills/:skillId", async (req, res) => {
   } catch (error) {
     console.error("Error updating skill:", error);
     res.status(500).json({ message: "Error updating skill." });
+  }
+});
+
+// ====== PUT /api/characters/:characterId/equipment/:equipmentId ======
+router.put("/:characterId/equipment/:equipmentId", async (req, res) => {
+  const { characterId, equipmentId } = req.params; // Extract IDs
+  const { name, type, description } = req.body; // Extract updated fields
+
+  try {
+    const query = `
+      UPDATE equipment
+      SET 
+        name = COALESCE($1, name),
+        type = COALESCE($2, type),
+        description = COALESCE($3, description)
+      WHERE id = $4 AND character_id = $5
+      RETURNING *;
+    `;
+
+    const values = [name, type, description, equipmentId, characterId];
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Equipment not found for this character." });
+    }
+
+    res.status(200).json({
+      message: "Equipment updated successfully.",
+      equipment: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error updating equipment:", error);
+    res.status(500).json({ message: "Error updating equipment." });
+  }
+});
+
+// ====== PUT /api/characters/:characterId/weapons/:weaponsId ======
+router.put("/:characterId/weapons/:weaponId", async (req, res) => {
+  const { characterId, weaponId } = req.params;
+  const { weapon_name, damage_die, description } = req.body;
+  try {
+    const query = `
+      UPDATE weapons
+      SET 
+        weapon_name = COALESCE($1, weapon_name),
+        damage_die = COALESCE($2, damage_die),
+        description = COALESCE($3, description)
+      WHERE id = $4 AND character_id = $5
+      RETURNING *;
+    `;
+
+    const values = [
+      weapon_name,
+      damage_die,
+      description,
+      weaponId,
+      characterId,
+    ];
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Weapon not found for this character." });
+    }
+
+    res.status(200).json({
+      message: "Weapon updated successfully.",
+      weapon: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error updating weapon:", error);
+    res.status(500).json({ message: "Error updating weapon." });
+  }
+});
+
+// ====== PUT /api/characters/:characterId/spells/:spellId ======
+router.put("/:characterId/spells/:spellId", async (req, res) => {
+  const { characterId, spellId } = req.params;
+  const { spell_name, damage_die, action_type, cost, description } = req.body;
+
+  try {
+    const query = `
+      UPDATE spells
+      SET 
+        spell_name = COALESCE($1, spell_name),
+        damage_die = COALESCE($2, damage_die),
+        action_type = COALESCE($3, action_type),
+        cost = COALESCE($4, cost),
+        description = COALESCE($5, description)
+      WHERE id = $6 AND character_id = $7
+      RETURNING *;
+    `;
+
+    const values = [
+      spell_name,
+      damage_die,
+      action_type,
+      cost,
+      description,
+      spellId,
+      characterId,
+    ];
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Spell not found for this character." });
+    }
+
+    res.status(200).json({
+      message: "Spell updated successfully.",
+      spell: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error updating spell:", error);
+    res.status(500).json({ message: "Error updating spell." });
   }
 });
 
