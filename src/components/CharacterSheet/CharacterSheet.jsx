@@ -19,11 +19,14 @@ const CharacterSheet = () => {
   const [newSkill, setNewSkill] = useState({ skill_name: '', damage_die: '', description: '', action_type: '', cost: '' });
   const [newSpell, setNewSpell] = useState({ spell_name: '', damage_die: '', cost: '', action_type: '', description: '' });
   const [newEquipment, setNewEquipment] = useState({ name: '', type: '', description: '' });
+  const [newMicroStat, setNewMicroStat] = useState({ stat_name: '', value: '' });
   const [newLanguage, setNewLanguage] = useState('');
   const [editingSkills, setEditingSkills] = useState([]);
   const [editingSpells, setEditingSpells] = useState([]);
   const [editingWeapons, setEditingWeapons] = useState([]);
   const [editingEquipment, setEditingEquipment] = useState([]);
+  const [editingMicroStats, setEditingMicroStats] = useState([]);
+
   
   
   // Toggles edit mode for a specific skill by index
@@ -183,15 +186,35 @@ useEffect(() => {
         setNewLanguage(''); // Reset language field
       }
   
+      // Add new micro-stat if fields are filled
+      if (newMicroStat.stat_name && !isNaN(newMicroStat.value)) {
+        await axios.post(`/api/characters/${characterId}/micro-stats`, newMicroStat);
+        alert("Micro-stat added successfully!");
+        setNewMicroStat({ stat_name: '', value: 0 }); // Reset form
+      }
+  
       // Refresh character data after saving
       await fetchCharacterData(); 
     } catch (error) {
       console.error("Error saving character changes:", error);
       alert("There was an error saving your changes. Please try again.");
     }
-
-  
   };
+
+
+  //====== Generic Handle Delete ======
+  const handleDelete = async (url, id, type) => {
+    try {
+      await axios.delete(url);
+      alert(`${type} deleted successfully!`);
+      await fetchCharacterData(); 
+    } catch (error) {
+      console.error(`Error deleting ${type}:`, error.message);
+      alert(`Failed to delete ${type}. Please try again.`);
+    }
+  };
+  
+  
 
  //====== Skill Change ======
   const handleSkillChange = (index, field, value) => {
@@ -223,6 +246,14 @@ useEffect(() => {
 
     updatedEquipment[index] = { ...updatedEquipment[index], [field]: value };
     setCharacter({ ...character, equipment: updatedEquipment });
+  };
+  
+  //====== Micro Stat Change ======
+  const handleMicroStatChange = (index, field, value) => {
+    const updatedStats = [...character.micro_stats];
+
+    updatedStats[index] = { ...updatedStats[index], [field]: value };
+    setCharacter({ ...character, micro_stats: updatedStats });
   };
   
   
@@ -288,6 +319,12 @@ useEffect(() => {
     setEditingEquipment(updatedEditingEquipment);
   };
   
+  const toggleEditMicroStat = (index) => {
+    const updatedEditingStats = [...editingMicroStats];
+    updatedEditingStats[index] = !updatedEditingStats[index];
+    setEditingMicroStats(updatedEditingStats);
+  };  
+  
   const saveSpellUpdates = async (index, spell) => {
     try {
       console.log("Updating spell:", spell);
@@ -297,6 +334,75 @@ useEffect(() => {
       console.error("Error saving spell:", err);
     }
   };
+
+  const handleSaveMicroStat = async (microStatId, updatedMicroStat) => {
+    try {
+      const response = await fetch(`/api/characters/${characterId}/micro-stats/${microStatId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedMicroStat),
+      });
+  
+      if (response.ok) {
+        alert("Micro-stat updated successfully!");
+        fetchCharacterData(); // Refresh character data
+      } else {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText}`);
+      }
+    } catch (error) {
+      console.error("Error updating micro stat:", error.message);
+      alert("Failed to update micro stat. Please try again.");
+    }
+  };
+  
+
+const handleAddMicroStat = async (microStat) => {
+  if (!microStat.stat_name) {
+    alert("Stat name is required.");
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/characters/${characterId}/micro-stats`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(microStat),
+    });
+
+    if (response.ok) {
+      alert("Micro-stat added successfully!");
+      setNewMicroStat({ stat_name: "", value: 0 }); // Reset the form
+      fetchCharacterData(); // Refresh the character data to include the new stat
+    } else {
+      const errorText = await response.text();
+      throw new Error(`Error ${response.status}: ${errorText}`);
+    }
+  } catch (error) {
+    console.error("Error adding micro-stat:", error.message);
+    alert("Failed to add micro-stat. Please try again.");
+  }
+};
+
+
+const handleDeleteMicroStat = async (statName) => {
+  try {
+    const response = await fetch(`/api/characters/${characterId}/micro-stats/${statName}`, {
+      method: "DELETE",
+    });
+
+    if (response.ok) {
+      alert("Micro-stat deleted successfully!");
+      // Fetch updated data
+    } else {
+      const errorText = await response.text();
+      throw new Error(`Error ${response.status}: ${errorText}`);
+    }
+  } catch (error) {
+    console.error("Error deleting micro-stat:", error.message);
+    alert("Failed to delete micro-stat. Please try again.");
+  }
+};
   
   const handleSaveSpell = async (spellId, updatedSpell) => {
     try {
@@ -629,6 +735,26 @@ useEffect(() => {
                     >
                       Edit Skill
                     </Button>
+                    <Button
+                      css={buttonStyle}
+                      variant="danger"
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Are you sure you want to delete the skill "${skill.skill_name}"? This action cannot be undone.`
+                          )
+                        ) {
+                          handleDelete(
+                            `/api/characters/${characterId}/skills/${skill.id}`,
+                            skill.id,
+                            "Skill"
+                          );
+                        }
+                      }}
+                      className="mt-2 ms-2"
+                    >
+                      Delete Skill
+                    </Button>
                   </>
                 ) : (
                   <Form>
@@ -738,6 +864,28 @@ useEffect(() => {
                     >
                       Edit Spell
                     </Button>
+                    <Button
+                    css={buttonStyle}
+                    variant="danger"
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Are you sure you want to delete the spell "${spell.spell_name}"? This action cannot be undone.`
+                        )
+                      ) {
+                        handleDelete(
+                          `/api/characters/${characterId}/spells/${spell.id}`,
+                          spell.id,
+                          'Spell'
+                        );
+                      }
+                    }}
+                    className="mt-2 ms-2"
+                  >
+                    Delete Spell
+                  </Button>
+
+
                   </>
                 ) : (
                   <Form>
@@ -841,6 +989,27 @@ useEffect(() => {
                     >
                       Edit Weapon
                     </Button>
+                    <Button
+                    css={buttonStyle}
+                    variant="danger"
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Are you sure you want to delete the weapon "${weapon.weapon_name}"? This action cannot be undone.`
+                        )
+                      ) {
+                        handleDelete(
+                          `/api/characters/${characterId}/weapons/${weapon.id}`,
+                          weapon.id,
+                          'Weapon'
+                        );
+                      }
+                    }}
+                    className="mt-2 ms-2"
+                  >
+                    Delete Weapon
+                  </Button>
+
                   </>
                 ) : (
                   <Form>
@@ -929,6 +1098,27 @@ useEffect(() => {
                     >
                       Edit Equipment
                     </Button>
+                    <Button
+                    css={buttonStyle}
+                    variant="danger"
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Are you sure you want to delete the equipment "${equip.name}"? This action cannot be undone.`
+                        )
+                      ) {
+                        handleDelete(
+                          `/api/characters/${characterId}/equipment/${equip.id}`,
+                          equip.id,
+                          'Equipment'
+                        );
+                      }
+                    }}
+                    className="mt-2 ms-2"
+                  >
+                    Delete Equipment
+                  </Button>
+
                   </>
                 ) : (
                   <Form>
@@ -993,16 +1183,143 @@ useEffect(() => {
   </Card>
 )}
 
+     
+{/* Micro Stats */}
+{character.micro_stats && character.micro_stats.length > 0 && (
+  <Card css={cardStyle} className="mb-3">
+    <Card.Header as="h3">Micro Stats</Card.Header>
+    <Card.Body>
+      <Row>
+        {character.micro_stats.map((microStat, index) => (
+          <Col md={6} key={`microStat-${index}`}>
+            <Card css={playerCardStyle} className="mb-3">
+              <Card.Body>
+                {!editingMicroStats[index] ? (
+                  <>
+                    <p css={textStyle}>
+                      <strong>Stat Name:</strong> {microStat.stat_name || "N/A"}
+                    </p>
+                    <p css={textStyle}>
+                      <strong>Value:</strong> {microStat.value || 0}
+                    </p>
+                    <Button
+                      css={buttonStyle}
+                      onClick={() => toggleEditMicroStat(index)}
+                      className="mt-2"
+                    >
+                      Edit Stat
+                    </Button>
+                    <Button
+                    css={buttonStyle}
+                    variant="danger"
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Are you sure you want to delete the micro stat "${microStat.stat_name}"? This action cannot be undone.`
+                        )
+                      ) {
+                        handleDelete(
+                          `/api/characters/${characterId}/micro-stats/${microStat.id}`,
+                          microStat.id,
+                          'Micro Stat'
+                        );
+                      }
+                    }}
+                    className="mt-2 ms-2"
+                  >
+                    Delete Micro Stat
+                  </Button>
 
-              {/* Languages */}
-              {character.languages && character.languages.length > 0 && (
+                  </>
+                ) : (
+                  <Form>
+                    <Form.Group controlId={`microStatName-${index}`}>
+                      <Form.Label css={textStyle}>
+                        <strong>Stat Name:</strong>
+                      </Form.Label>
+                      <Form.Control
+                        type="text"
+                        defaultValue={microStat.stat_name}
+                        onChange={(e) =>
+                          handleMicroStatChange(index, "stat_name", e.target.value)
+                        }
+                      />
+                    </Form.Group>
+                    <Form.Group controlId={`microStatValue-${index}`}>
+                      <Form.Label css={textStyle}>
+                        <strong>Value:</strong>
+                      </Form.Label>
+                      <Form.Control
+                        type="number"
+                        defaultValue={microStat.value}
+                        onChange={(e) =>
+                          handleMicroStatChange(index, "value", parseInt(e.target.value))
+                        }
+                      />
+                    </Form.Group>
+                    <Button
+                      css={buttonStyle}
+                      onClick={() => {
+                        console.log("Updating micro stat:", microStat);
+                        handleSaveMicroStat(microStat.id, microStat);
+                        toggleEditMicroStat(index);
+                      }}
+                      className="mt-2"
+                    >
+                      Save Changes
+                    </Button>
+                    <Button
+                      css={buttonStyle}
+                      variant="secondary"
+                      onClick={() => toggleEditMicroStat(index)}
+                      className="mt-2 ms-2"
+                    >
+                      Cancel
+                    </Button>
+                  </Form>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+    </Card.Body>
+  </Card>
+)}
+
+
+
+           {/* Languages */}
+{character.languages && character.languages.length > 0 && (
   <Card css={cardStyle} className="mb-3">
     <Card.Header as="h3">Languages</Card.Header>
     <Card.Body>
       <Row>
         {character.languages.map((language, index) => (
-          <Col md={6} key={`language-${index}`}>
-            <p><strong>Language:</strong> {language}</p>
+          <Col md={6} key={`language-${language.id || index}`}>
+            <p>
+              <strong>Language:</strong> {language.language_name}
+            </p>
+            <Button
+              css={buttonStyle}
+              variant="danger"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    `Are you sure you want to delete the language "${language.language_name}"? This action cannot be undone.`
+                  )
+                ) {
+                  handleDelete(
+                    `/api/characters/${characterId}/languages/${language.id}`,
+                    language.id,
+                    "Language"
+                  );
+                }
+              }}
+              className="mt-2 ms-2"
+            >
+              Delete Language
+            </Button>
           </Col>
         ))}
       </Row>
@@ -1337,6 +1654,32 @@ useEffect(() => {
         </Form.Group>
       </Col>
     </Row>
+
+{/* New Micro-Stat */}
+<h4>Add New Micro-Stat</h4>
+<Row css={cardStyle}>
+  <Col md={6}>
+    <Form.Group controlId="newMicroStatName">
+      <Form.Label>Stat Name</Form.Label>
+      <Form.Control
+        type="text"
+        value={newMicroStat.stat_name}
+        onChange={(e) => setNewMicroStat({ ...newMicroStat, stat_name: e.target.value })}
+      />
+    </Form.Group>
+  </Col>
+  <Col md={6}>
+    <Form.Group controlId="newMicroStatValue">
+      <Form.Label>Value</Form.Label>
+      <Form.Control
+        type="number"
+        value={newMicroStat.value}
+        onChange={(e) => setNewMicroStat({ ...newMicroStat, value: parseInt(e.target.value) || 0 })}
+      />
+    </Form.Group>
+  </Col>
+</Row>
+
 
     {/* New Skill */}
     <h4>Add New Skill</h4>

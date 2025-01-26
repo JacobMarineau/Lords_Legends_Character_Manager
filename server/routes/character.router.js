@@ -172,7 +172,7 @@ router.get("/:id", async (req, res) => {
           c.intimidation,
           -- Use JSON_AGG to return these as JSON arrays
           JSON_AGG(DISTINCT jsonb_build_object('id', ms.id, 'stat_name', ms.stat_name, 'value', COALESCE(ms.value, 0))) AS micro_stats,
-          JSON_AGG(DISTINCT lang.language_name) AS languages,
+          JSON_AGG(DISTINCT jsonb_build_object('id', lang.id, 'language_name', lang.language_name)) AS languages,
           JSON_AGG(DISTINCT jsonb_build_object('id', sp.id, 'spell_name', sp.spell_name, 'damage_die', sp.damage_die, 'cost', sp.cost, 'action_type', sp.action_type, 'description', sp.description)) AS spells,
           JSON_AGG(DISTINCT jsonb_build_object('id', w.id, 'weapon_name', w.weapon_name, 'damage_die', w.damage_die, 'description', w.description)) AS weapons,
           JSON_AGG(DISTINCT jsonb_build_object('id', eq.id, 'name', eq.name, 'type', eq.type, 'description', eq.description)) AS equipment,
@@ -756,6 +756,26 @@ router.post("/:characterId/equipment", async (req, res) => {
   }
 });
 
+// POST route to add a new micro-stat for a character
+router.post("/:characterId/micro-stats", async (req, res) => {
+  const characterId = req.params.characterId; // Extract characterId from URL params
+  const { stat_name, value } = req.body; // Extract stat_name and value from request body
+
+  try {
+    // Insert new micro-stat into the database
+    const result = await pool.query(
+      "INSERT INTO micro_stats (character_id, stat_name, value) VALUES ($1, $2, $3) RETURNING *",
+      [characterId, stat_name, value]
+    );
+
+    // Respond with the created micro-stat
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error adding micro-stat:", error.message);
+    res.status(500).json({ message: "Error adding micro-stat" });
+  }
+});
+
 // POST route to add a new language for a character
 router.post("/:characterId/languages", async (req, res) => {
   const { characterId } = req.params;
@@ -1061,6 +1081,41 @@ router.put("/:characterId/skills/:skillId", async (req, res) => {
   } catch (error) {
     console.error("Error updating skill:", error);
     res.status(500).json({ message: "Error updating skill." });
+  }
+});
+
+// ====== PUT /api/characters/:characterId/micro_stats/:micro_statsId ======
+router.put("/:characterId/micro-stats/:microStatId", async (req, res) => {
+  const { characterId, microStatId } = req.params; // Params from URL
+  const { stat_name, value } = req.body; // Data sent in the request body
+
+  try {
+    const query = `
+      UPDATE micro_stats
+      SET 
+        stat_name = COALESCE($1, stat_name),
+        value = COALESCE($2, value)
+      WHERE id = $3 AND character_id = $4
+      RETURNING *;
+    `;
+
+    const values = [stat_name, value, microStatId, characterId];
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Micro stat not found for this character." });
+    }
+
+    res.status(200).json({
+      message: "Micro stat updated successfully.",
+      microStat: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error updating micro stat:", error);
+    res.status(500).json({ message: "Error updating micro stat." });
   }
 });
 
