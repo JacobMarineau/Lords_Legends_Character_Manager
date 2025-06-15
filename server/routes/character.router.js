@@ -170,6 +170,8 @@ router.get("/:id", async (req, res) => {
           c.counter_charisma,
           c.magical_knowledge,
           c.intimidation,
+          c.magic_save_modifier,
+          c.physical_save_modifier,
           -- Use JSON_AGG to return these as JSON arrays
           JSON_AGG(DISTINCT jsonb_build_object('id', ms.id, 'stat_name', ms.stat_name, 'value', COALESCE(ms.value, 0))) AS micro_stats,
           JSON_AGG(DISTINCT jsonb_build_object('id', lang.id, 'language_name', lang.language_name)) AS languages,
@@ -419,19 +421,16 @@ router.post("/", rejectUnauthenticated, async (req, res) => {
   }
 
   // ====== STAT CALCULATION FUNCTION ======
-
   function calculateMajorStatModifier(stat) {
     return Math.floor((stat - 10) / 2);
   }
 
   // ====== WILLPOWER, FEROCITY, ARCANA SINGLE SPEC FUNCTION ======
-
   function applySingleSpecStat(stat) {
     return stat;
   }
 
   // ====== UPDATE MINOR STATS BASED ON MAJOR STATS ======
-
   function updateMinorStats(character) {
     const updatedCharacter = { ...character };
 
@@ -476,25 +475,23 @@ router.post("/", rejectUnauthenticated, async (req, res) => {
     updatedCharacter.resistance = character.resistance + vitalityModifier;
 
     // ====== WILLPOWER ======
-    updatedCharacter.feat_of_heroism =
-      character.feat_of_heroism + applySingleSpecStat(character.willpower);
-    updatedCharacter.leadership =
-      character.leadership + applySingleSpecStat(character.willpower);
-    updatedCharacter.counter_charisma =
-      character.counter_charisma + applySingleSpecStat(character.willpower);
+    updatedCharacter.feat_of_heroism = applySingleSpecStat(character.willpower);
+    updatedCharacter.leadership = applySingleSpecStat(character.willpower);
+    updatedCharacter.counter_charisma = applySingleSpecStat(
+      character.willpower
+    );
 
     // ====== ARCANA ======
-    updatedCharacter.magical_knowledge =
-      character.magical_knowledge + applySingleSpecStat(character.arcana);
-    updatedCharacter.magic_save_modifier =
-      character.magic_save_modifier + applySingleSpecStat(character.arcana);
+    updatedCharacter.magical_knowledge = applySingleSpecStat(character.arcana);
+    updatedCharacter.magic_save_modifier = applySingleSpecStat(
+      character.arcana
+    );
 
     // ====== FEROCITY ======
-    updatedCharacter.intimidation =
-      character.intimidation + applySingleSpecStat(character.ferocity);
-    updatedCharacter.physical_save_modifier =
-      character.physical_save_modifier +
-      applySingleSpecStat(character.ferocity);
+    updatedCharacter.intimidation = applySingleSpecStat(character.ferocity);
+    updatedCharacter.physical_save_modifier = applySingleSpecStat(
+      character.ferocity
+    );
 
     return updatedCharacter;
   }

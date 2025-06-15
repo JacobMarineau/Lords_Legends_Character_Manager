@@ -25,6 +25,75 @@
           "description": "Leadership checks low cap at 10"
         }
       ]
-    }
+    },
+    "abrigian": {
+          "modifiers": {
+              "willpower": 3,
+              "intelligence": 2,
+              "ferocity": 1,
+              "dexterity": -1,
+              "strength": -1
+          },
+          "passives": [
+              {
+                  "skill_name": "Abrigian Presence",
+                  "description": "Willpower can be used in place of Charisma rolls."
+              }
+          ]
+      },
+      "herotorian": {
+          "modifiers": {
+              "intelligence": 2,
+              "willpower": 2,
+              "charisma": 1,
+              "strength": -3
+          },
+          "passives": [
+              {
+                  "skill_name": "Herotorian Presence",
+                  "description": "You have advantage during persuasion rolls if your Charisma is higher than the creature's, and disadvantage if your Charisma is lower."
+              }
+          ]
+      },
+      "sahasl": {
+          "modifiers": {
+              "willpower": 2,
+              "strength": 1,
+              "vitality": 1
+          },
+          "passives": [
+              {
+                  "skill_name": "Sahasl Sight",
+                  "description": "Can see in the dark up to 100ft."
+              }
+          ]
+      },
+      "lethiathan": {
+          "modifiers": {
+              "intelligence": 3,
+              "dexterity": 3,
+              "strength": -3
+          },
+          "passives": [
+              {
+                  "skill_name": "Lethiathan Presence",
+                  "description": "Creatures with Charisma lower than yours have disadvantage during their Charisma rolls against you."
+              }
+          ]
+      },
+      "noupishjian": {
+          "modifiers": {
+              "charisma": 2,
+              "strength": 2,
+              "dexterity": -2
+          },
+          "passives": [
+              {
+                  "skill_name": "Noupishjian Biology",
+                  "description": "Can breathe underwater and see farther (up to 300ft away)."
+              }
+          ]
+      }
+  
   }
   

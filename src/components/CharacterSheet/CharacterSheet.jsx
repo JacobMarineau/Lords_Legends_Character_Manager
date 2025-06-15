@@ -63,7 +63,8 @@ const CharacterSheet = () => {
 
   const cardStyle = css`
     background: ${theme.colors.baseColor2};
-    color: ${theme.colors.offWhiteBackground};
+    color: ${theme.colors.highContrastTextLight};
+    font-size: 20px;
     margin-bottom: ${theme.spacing.medium};
     padding: ${theme.spacing.large};
     border-radius: 8px;
@@ -84,6 +85,19 @@ const CharacterSheet = () => {
       background-color: ${theme.colors.trim};
     }
   `;
+
+  const buttonDeleteStyle = css`
+  margin-top: ${theme.spacing.medium};
+  margin-bottom: ${theme.spacing.medium};
+  background-color: ${theme.colors.willpowerGroup};
+  border: none;
+  padding: 8px 16px;
+  text-shadow: ${theme.effects.textDropShadow};
+  &:hover {
+    background-color: ${theme.colors.trim};
+  }
+`;
+
 
   const equipmentItemStyle = css`
   padding: ${theme.spacing.small} 0;
@@ -467,7 +481,13 @@ const handleDeleteMicroStat = async (statName) => {
 
   const toggleMode = () => setViewMode(!viewMode);
 
-  const calculateModifiers = (stat) => Math.floor((stat - 10) / 2);
+  const calculateModifiers = (stat, isSingleSpec = false) => {
+    if (isSingleSpec) {
+      return stat || 0; 
+    }
+    return Math.floor((stat - 10) / 2); 
+  };
+  
 
   const categorizedMinorStats = {
     strength: ['acrobatics', 'athletics', 'agility', 'lifting'],
@@ -475,13 +495,17 @@ const handleDeleteMicroStat = async (statName) => {
     intelligence: ['history', 'wisdom', 'science', 'technology', 'foraging'],
     charisma: ['persuasion', 'deception', 'bargaining', 'performance', 'charm'],
     vitality: ['endurance', 'resistance'],
-    willpower: ['feat_of_heroism', 'leadership', 'counter_charisma'],
-    arcana: ['magical_knowledge', 'magic_save_modifier'],
-    ferocity: ['intimidation', 'physical_save_modifier'],
+    willpower: { stats: ['feat_of_heroism', 'leadership', 'counter_charisma'], isSingleSpec: true },
+    arcana: { stats: ['magical_knowledge', 'magic_save_modifier'], isSingleSpec: true },
+    ferocity: { stats: ['intimidation', 'physical_save_modifier'], isSingleSpec: true },
   };
 
   const renderMinorStats = (majorStat, minorStats) => {
-    const majorModifier = calculateModifiers(character[majorStat]);
+    // Check if the stat is single-spec
+    const isSingleSpec = minorStats.isSingleSpec || false;
+    const statList = Array.isArray(minorStats) ? minorStats : minorStats.stats;
+  
+    const majorModifier = calculateModifiers(character[majorStat], isSingleSpec);
     return (
       <Card css={cardStyle} className="mb-3">
         <Card.Header as="h4">
@@ -489,10 +513,10 @@ const handleDeleteMicroStat = async (statName) => {
         </Card.Header>
         <Card.Body>
           <Row>
-            {minorStats.map((stat) => (
+            {statList.map((stat) => (
               <Col key={stat} md={6}>
                 <p>
-                  <strong>{stat.replace(/_/g, ' ').charAt(0).toUpperCase() + stat.replace(/_/g, ' ').slice(1)}: </strong> 
+                  <strong>{stat.replace(/_/g, ' ').charAt(0).toUpperCase() + stat.replace(/_/g, ' ').slice(1)}: </strong>
                   {character[stat] + majorModifier} (Base: {character[stat]}, Modifier: {majorModifier})
                 </p>
               </Col>
@@ -502,6 +526,7 @@ const handleDeleteMicroStat = async (statName) => {
       </Card>
     );
   };
+  
 
   return (
     <div css={containerStyle}>
@@ -683,6 +708,7 @@ const handleDeleteMicroStat = async (statName) => {
 
               {/* Major Stats & Modifiers */}
               <Card css={cardStyle} className="mb-3">
+                <Card css={playerCardStyle}>
                 <Card.Header as="h3">Major Stats & Modifiers</Card.Header>
                 <Card.Body>
                   <Row>
@@ -704,12 +730,17 @@ const handleDeleteMicroStat = async (statName) => {
                     ))}
                   </Row>
                 </Card.Body>
+                </Card>
               </Card>
+             {/* Render categorized minor stats with modifiers */}
+            {Object.entries(categorizedMinorStats).map(([majorStat, minorStats]) => (
+              <Card css={playerCardStyle} key={majorStat} className="mb-3">
+                {renderMinorStats(majorStat, minorStats)}
+              </Card>
+            ))}
 
-              {/* Render categorized minor stats with modifiers */}
-              {Object.entries(categorizedMinorStats).map(([majorStat, minorStats]) => (
-                renderMinorStats(majorStat, minorStats)
-              ))}
+
+
 
         {/* Skills */}
         {character.skills && character.skills.length > 0 && (
@@ -736,7 +767,7 @@ const handleDeleteMicroStat = async (statName) => {
                       Edit Skill
                     </Button>
                     <Button
-                      css={buttonStyle}
+                      css={buttonDeleteStyle}
                       variant="danger"
                       onClick={() => {
                         if (
@@ -865,7 +896,7 @@ const handleDeleteMicroStat = async (statName) => {
                       Edit Spell
                     </Button>
                     <Button
-                    css={buttonStyle}
+                    css={buttonDeleteStyle}
                     variant="danger"
                     onClick={() => {
                       if (
@@ -990,7 +1021,7 @@ const handleDeleteMicroStat = async (statName) => {
                       Edit Weapon
                     </Button>
                     <Button
-                    css={buttonStyle}
+                    css={buttonDeleteStyle}
                     variant="danger"
                     onClick={() => {
                       if (
@@ -1099,7 +1130,7 @@ const handleDeleteMicroStat = async (statName) => {
                       Edit Equipment
                     </Button>
                     <Button
-                    css={buttonStyle}
+                    css={buttonDeleteStyle}
                     variant="danger"
                     onClick={() => {
                       if (
@@ -1210,7 +1241,7 @@ const handleDeleteMicroStat = async (statName) => {
                       Edit Stat
                     </Button>
                     <Button
-                    css={buttonStyle}
+                    css={buttonDeleteStyle}
                     variant="danger"
                     onClick={() => {
                       if (
@@ -1301,7 +1332,7 @@ const handleDeleteMicroStat = async (statName) => {
               <strong>Language:</strong> {language.language_name}
             </p>
             <Button
-              css={buttonStyle}
+              css={buttonDeleteStyle}
               variant="danger"
               onClick={() => {
                 if (
@@ -1605,7 +1636,7 @@ const handleDeleteMicroStat = async (statName) => {
     {/* Minor Stats */}
     <h4>Minor Stats</h4>
     <Row css={cardStyle}>
-      {['acrobatics', 'athletics', 'agility', 'lifting', 'sleight_of_hand', 'stealth', 'medicine', 'weapon_mastery', 'carving', 'history', 'wisdom', 'science', 'technology', 'foraging', 'persuasion', 'deception', 'bargaining', 'performance', 'charm', 'endurance', 'resistance'].map((stat) => (
+      {['acrobatics', 'athletics', 'agility', 'lifting', 'sleight_of_hand', 'stealth', 'medicine', 'weapon_mastery', 'carving', 'history', 'wisdom', 'science', 'technology', 'foraging', 'persuasion', 'deception', 'bargaining', 'performance', 'charm', 'endurance', 'resistance', 'feat_of_heroism', 'counter_charisma', 'leadership', 'magical_knowledge', 'magic_save_modifier', 'intimidation', 'physical_save_modifier'].map((stat) => (
         <Col md={4} key={stat}>
           <Form.Group controlId={stat}>
             <Form.Label>{stat.replace(/_/g, ' ')}</Form.Label>
@@ -1851,6 +1882,9 @@ const handleDeleteMicroStat = async (statName) => {
           )}
         </>
       )}
+      <Col>
+          <Button css={buttonStyle} onClick={toggleMode}>Add / Edit Character Details</Button>
+          </Col>
     </div>
   );
 };
