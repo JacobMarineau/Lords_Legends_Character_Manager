@@ -376,3 +376,116 @@ h1, h2, h3, h4, h5 {
   text-align: center;
   margin: 0 0 20px;
 }
+
+/* ---- Creator stepper ---- */
+.ll-steps {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.ll-step {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--off-white-2);
+  color: var(--heading-footer);
+  font-size: 14px;
+  opacity: 0.7;
+}
+.ll-step.is-active {
+  background: var(--base-2);
+  color: var(--text-light);
+  opacity: 1;
+}
+.ll-step.is-done {
+  opacity: 1;
+}
+.ll-step__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--text-dark);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* ---- Sheet ---- */
+.ll-sheet-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+.ll-sheet-section {
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.ll-sheet-section .ll-section-label {
+  color: var(--heading-footer);
+  opacity: 1;
+  margin-top: 0;
+}
+.ll-saved-msg {
+  align-self: center;
+  color: #2e7d32;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Field grids */
+.ll-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0 16px;
+}
+.ll-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0 12px;
+}
+
+/* Editable stat tile */
+.ll-statedit {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 8px;
+  padding: 8px 6px;
+  text-align: center;
+  border-top: 4px solid var(--base);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.ll-statedit__input {
+  text-align: center;
+  font-weight: 700;
+  padding: 4px;
+  margin: 2px 0;
+}
+
+/* Collection rows */
+.ll-item-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.ll-inline {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 14px;
+  min-width: 0;
+}
+.ll-inline--num {
+  flex: 0 0 90px;
+}
+.ll-item-x {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+}

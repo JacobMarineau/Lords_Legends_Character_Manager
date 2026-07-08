@@ -18,6 +18,9 @@ type NewCharacter =
     { Name: string
       RaceId: string
       VocationId: string
+      Specialty: string
+      Height: string
+      Age: int
       Primary: PrimaryStats
       Secondary: SecondaryStats
       /// Result of the player's 2d8 roll for starting HP.
@@ -47,4 +50,6 @@ type ICharacterApi =
       getCharacters: unit -> Async<Character list>
       getCharacter: int -> Async<Character option>
       createCharacter: NewCharacter -> Async<Character>
+      /// Save the whole character aggregate (all fields + collections). Owner-scoped.
+      updateCharacter: Character -> Async<Character>
       deleteCharacter: int -> Async<unit> }

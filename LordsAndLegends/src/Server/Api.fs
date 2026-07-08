@@ -47,6 +47,9 @@ let private buildCharacter (ownerId: int) (nc: NewCharacter) : Character =
       Name = nc.Name
       RaceId = nc.RaceId
       VocationId = nc.VocationId
+      Specialty = nc.Specialty
+      Height = nc.Height
+      Age = nc.Age
       Primary = nc.Primary
       Secondary = nc.Secondary
       ExtendedWillpower = Mechanics.StartingExtendedWillpower
@@ -56,7 +59,19 @@ let private buildCharacter (ownerId: int) (nc: NewCharacter) : Character =
       Injuries = 0
       MaxInjuries = Mechanics.StartingMaxInjuries
       SpeedClass = Mechanics.StartingSpeedClass
-      SoulTier = Mechanics.StartingSoulTier }
+      SoulTier = Mechanics.StartingSoulTier
+      FocusPoints = 0
+      Glint = 0
+      Thp = 0
+      Ar = 0
+      Os = 0
+      Mr = 0
+      Weapons = []
+      Spells = []
+      Skills = []
+      Equipment = []
+      Languages = []
+      MicroStats = [] }
 
 // -- Auth API ---------------------------------------------------------------
 
@@ -133,6 +148,22 @@ let characterApiFor (ctx: HttpContext) : ICharacterApi =
                 let character = buildCharacter u.Id nc
                 let! id = Database.insertCharacter character
                 return { character with Id = id }
+            }
+
+      // Save the whole aggregate — but only if it belongs to the caller, and
+      // force the stored owner to the caller (can't reassign to someone else).
+      updateCharacter =
+        fun incoming ->
+            async {
+                let u = requireUser ()
+                let! existing = Database.getCharacter incoming.Id
+
+                match existing with
+                | Some ch when ch.OwnerId = u.Id ->
+                    let toSave = { incoming with OwnerId = u.Id }
+                    do! Database.updateCharacter toSave
+                    return toSave
+                | _ -> return failwith "Character not found."
             }
 
       // Only delete if the character belongs to the caller (fixes the old IDOR).

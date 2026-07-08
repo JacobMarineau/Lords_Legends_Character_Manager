@@ -26,6 +26,7 @@
     <!-- Pinned to the .NET 8-compatible line: Fable.Remoting 6.x pulls
          Giraffe 8.x, which targets .NET 9. 5.24.0 uses Giraffe 6.x (net8). -->
     <PackageReference Include="Fable.Remoting.Giraffe" Version="5.24.0" />
+    <PackageReference Include="FSharp.SystemTextJson" Version="1.4.36" />
     <!-- Fable.Remoting's current binaries reference the .NET 9 build of
          Primitives even on old version numbers; supply it explicitly (it runs
          fine on the net8 runtime) so request handling can load StringValues. -->

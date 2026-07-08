@@ -6,12 +6,23 @@ open Feliz
 open LordsAndLegends.Shared
 
 // ---------------------------------------------------------------------------
+// Small list helpers for editing collections by index
+// ---------------------------------------------------------------------------
+
+let private updateAt i f xs =
+    xs |> List.mapi (fun idx x -> if idx = i then f x else x)
+
+let private removeAt i xs =
+    xs |> List.mapi (fun idx x -> idx, x) |> List.choose (fun (idx, x) -> if idx = i then None else Some x)
+
+// ---------------------------------------------------------------------------
 // Model
 // ---------------------------------------------------------------------------
 
 type Page =
     | CharacterList
     | CreateForm
+    | Sheet
 
 type AuthMode =
     | LoginMode
@@ -31,12 +42,20 @@ type Model =
       Page: Page
       Loading: bool
       Error: string option
-      // Creation form
+      // Creator (multi-step)
+      Step: int
       Name: string
       RaceId: string
       VocationId: string
+      Specialty: string
+      Height: string
+      Age: int
       Array: StartingArray
-      HpRoll: int }
+      HpRoll: int
+      // Sheet editing
+      Draft: Character option
+      Saving: bool
+      SaveMsg: string option }
 
 type Msg =
     // Auth
@@ -48,24 +67,44 @@ type Msg =
     | AuthResult of Result<User, string>
     | Logout
     | LoggedOut
-    // App
+    // Data
     | ContentLoaded of Content
     | CharactersLoaded of Character list
+    | Failed of exn
+    // Creator
     | GoTo of Page
+    | SetStep of int
     | SetName of string
     | SetRace of string
     | SetVocation of string
+    | SetSpecialty of string
+    | SetHeight of string
+    | SetAge of int
     | SetArray of StartingArray
     | SetHpRoll of int
     | Submit
     | Created of Character
+    // Sheet
+    | OpenSheet of Character
+    | UpdateDraft of (Character -> Character)
+    | SaveDraft
+    | Saved of Character
     | Delete of int
     | Deleted of int
-    | Failed of exn
 
 // ---------------------------------------------------------------------------
 // Init / update
 // ---------------------------------------------------------------------------
+
+let private freshCreator (m: Model) =
+    { m with
+        Step = 1
+        Name = ""
+        Specialty = ""
+        Height = ""
+        Age = 0
+        Array = NormalPerson
+        HpRoll = 9 }
 
 let init () =
     let model =
@@ -80,23 +119,26 @@ let init () =
           Page = CharacterList
           Loading = false
           Error = None
+          Step = 1
           Name = ""
           RaceId = ""
           VocationId = ""
+          Specialty = ""
+          Height = ""
+          Age = 0
           Array = NormalPerson
-          HpRoll = 9 }
+          HpRoll = 9
+          Draft = None
+          Saving = false
+          SaveMsg = None }
 
     model, Cmd.OfAsync.either Api.authApi.getCurrentUser () GotCurrentUser Failed
 
-/// Commands to run once we know who the user is: load content + their characters.
 let private loadAppData =
     Cmd.batch
         [ Cmd.OfAsync.either Api.characterApi.getContent () ContentLoaded Failed
           Cmd.OfAsync.either Api.characterApi.getCharacters () CharactersLoaded Failed ]
 
-/// Turn the chosen Hard Start array + form choices into a NewCharacter.
-/// (Values are assigned in canonical stat order for now; free re-assignment is
-/// a planned enhancement.)
 let private buildNewCharacter (m: Model) : NewCharacter =
     let p = StatGeneration.primaryArray m.Array
     let s = StatGeneration.secondaryArray m.Array
@@ -104,6 +146,9 @@ let private buildNewCharacter (m: Model) : NewCharacter =
     { Name = m.Name
       RaceId = m.RaceId
       VocationId = m.VocationId
+      Specialty = m.Specialty
+      Height = m.Height
+      Age = m.Age
       Primary =
         { Might = p.[0]
           Agility = p.[1]
@@ -135,23 +180,12 @@ let update (msg: Msg) (model: Model) =
 
         { model with Loading = true; AuthError = None }, Cmd.OfAsync.either call creds AuthResult Failed
     | AuthResult(Ok user) ->
-        { model with
-            Loading = false
-            CurrentUser = Some user
-            Password = ""
-            AuthError = None },
-        loadAppData
+        { model with Loading = false; CurrentUser = Some user; Password = ""; AuthError = None }, loadAppData
     | AuthResult(Error e) -> { model with Loading = false; AuthError = Some e }, Cmd.none
     | Logout -> model, Cmd.OfAsync.either Api.authApi.logout () (fun () -> LoggedOut) Failed
     | LoggedOut ->
-        { model with
-            CurrentUser = None
-            Characters = []
-            Username = ""
-            Password = ""
-            Page = CharacterList },
-        Cmd.none
-    // -- App --
+        { model with CurrentUser = None; Characters = []; Username = ""; Password = ""; Page = CharacterList }, Cmd.none
+    // -- Data --
     | ContentLoaded content ->
         let firstRace = content.Races |> List.tryHead |> Option.map (fun r -> r.Id) |> Option.defaultValue ""
         let firstVoc = content.Vocations |> List.tryHead |> Option.map (fun v -> v.Id) |> Option.defaultValue ""
@@ -162,10 +196,24 @@ let update (msg: Msg) (model: Model) =
             VocationId = (if model.VocationId = "" then firstVoc else model.VocationId) },
         Cmd.none
     | CharactersLoaded characters -> { model with Characters = characters }, Cmd.none
-    | GoTo page -> { model with Page = page; Error = None }, Cmd.none
+    | Failed ex ->
+        { model with
+            Loading = false
+            Saving = false
+            CheckingAuth = false
+            AuthError = (if model.CurrentUser.IsNone then Some ex.Message else model.AuthError)
+            Error = Some ex.Message },
+        Cmd.none
+    // -- Creator --
+    | GoTo CreateForm -> (freshCreator { model with Page = CreateForm; Error = None }), Cmd.none
+    | GoTo page -> { model with Page = page; Error = None; Draft = None; SaveMsg = None }, Cmd.none
+    | SetStep n -> { model with Step = n }, Cmd.none
     | SetName name -> { model with Name = name }, Cmd.none
     | SetRace id -> { model with RaceId = id }, Cmd.none
     | SetVocation id -> { model with VocationId = id }, Cmd.none
+    | SetSpecialty s -> { model with Specialty = s }, Cmd.none
+    | SetHeight h -> { model with Height = h }, Cmd.none
+    | SetAge a -> { model with Age = a }, Cmd.none
     | SetArray arr -> { model with Array = arr }, Cmd.none
     | SetHpRoll n -> { model with HpRoll = n }, Cmd.none
     | Submit ->
@@ -174,13 +222,32 @@ let update (msg: Msg) (model: Model) =
     | Created character ->
         { model with
             Characters = model.Characters @ [ character ]
-            Page = CharacterList
+            Page = Sheet
+            Draft = Some character
             Loading = false
-            Name = "" },
+            SaveMsg = None },
+        Cmd.none
+    // -- Sheet --
+    | OpenSheet c -> { model with Page = Sheet; Draft = Some c; SaveMsg = None; Error = None }, Cmd.none
+    | UpdateDraft f -> { model with Draft = model.Draft |> Option.map f; SaveMsg = None }, Cmd.none
+    | SaveDraft ->
+        match model.Draft with
+        | Some c -> { model with Saving = true }, Cmd.OfAsync.either Api.characterApi.updateCharacter c Saved Failed
+        | None -> model, Cmd.none
+    | Saved c ->
+        { model with
+            Saving = false
+            Draft = Some c
+            SaveMsg = Some "Saved."
+            Characters = model.Characters |> List.map (fun x -> if x.Id = c.Id then c else x) },
         Cmd.none
     | Delete id -> model, Cmd.OfAsync.either Api.characterApi.deleteCharacter id (fun () -> Deleted id) Failed
-    | Deleted id -> { model with Characters = model.Characters |> List.filter (fun c -> c.Id <> id) }, Cmd.none
-    | Failed ex -> { model with Loading = false; CheckingAuth = false; Error = Some ex.Message }, Cmd.none
+    | Deleted id ->
+        { model with
+            Characters = model.Characters |> List.filter (fun c -> c.Id <> id)
+            Page = (if model.Page = Sheet then CharacterList else model.Page)
+            Draft = None },
+        Cmd.none
 
 // ---------------------------------------------------------------------------
 // View helpers
@@ -188,20 +255,15 @@ let update (msg: Msg) (model: Model) =
 
 let private fmtMod (n: int) = if n >= 0 then sprintf "+%d" n else string n
 
-let private raceName (content: Content option) (raceId: string) =
-    content
-    |> Option.bind (fun c -> c.Races |> List.tryFind (fun r -> r.Id = raceId))
-    |> Option.map (fun r -> r.Name)
-    |> Option.defaultValue raceId
+let private nameOf (items: (string * string) list) (id: string) =
+    items |> List.tryFind (fun (i, _) -> i = id) |> Option.map snd |> Option.defaultValue id
 
-let private vocationName (content: Content option) (vocId: string) =
-    content
-    |> Option.bind (fun c -> c.Vocations |> List.tryFind (fun v -> v.Id = vocId))
-    |> Option.map (fun v -> v.Name)
-    |> Option.defaultValue vocId
+let private raceOptions (content: Content option) =
+    content |> Option.map (fun c -> [ for r in c.Races -> r.Id, r.Name ]) |> Option.defaultValue []
 
-/// One color-coded stat tile. `variant` is a CSS modifier like "ll-stat--might"
-/// (empty for the neutral derived-stat tiles).
+let private vocationOptions (content: Content option) =
+    content |> Option.map (fun c -> [ for v in c.Vocations -> v.Id, v.Name ]) |> Option.defaultValue []
+
 let private statTile (variant: string) (label: string) (value: string) (sub: string) =
     Html.div
         [ prop.className (if variant = "" then "ll-stat" else "ll-stat " + variant)
@@ -209,6 +271,50 @@ let private statTile (variant: string) (label: string) (value: string) (sub: str
               [ Html.div [ prop.className "ll-stat__label"; prop.text label ]
                 Html.div [ prop.className "ll-stat__value"; prop.text value ]
                 Html.div [ prop.className "ll-stat__mod"; prop.text sub ] ] ]
+
+let private textField (label: string) (value: string) (onChange: string -> unit) =
+    Html.div
+        [ prop.className "ll-field"
+          prop.children
+              [ Html.label [ prop.className "ll-label"; prop.text label ]
+                Html.input [ prop.className "ll-input"; prop.value value; prop.onChange onChange ] ] ]
+
+let private numField (label: string) (value: int) (onChange: int -> unit) =
+    Html.div
+        [ prop.className "ll-field"
+          prop.children
+              [ Html.label [ prop.className "ll-label"; prop.text label ]
+                Html.input
+                    [ prop.className "ll-input"
+                      prop.type' "number"
+                      prop.value value
+                      prop.onChange (fun (v: string) ->
+                          match System.Int32.TryParse v with
+                          | true, n -> onChange n
+                          | _ -> ()) ] ] ]
+
+let private selectField (label: string) (value: string) (options: (string * string) list) (onChange: string -> unit) =
+    Html.div
+        [ prop.className "ll-field"
+          prop.children
+              [ Html.label [ prop.className "ll-label"; prop.text label ]
+                Html.select
+                    [ prop.className "ll-select"
+                      prop.value value
+                      prop.onChange onChange
+                      prop.children [ for (v, t) in options -> Html.option [ prop.value v; prop.text t ] ] ] ] ]
+
+/// A compact inline text box used inside collection rows.
+let private inlineBox (placeholder: string) (value: string) (onChange: string -> unit) =
+    Html.input
+        [ prop.className "ll-input ll-inline"
+          prop.placeholder placeholder
+          prop.value value
+          prop.onChange onChange ]
+
+// ---------------------------------------------------------------------------
+// Character card (list view)
+// ---------------------------------------------------------------------------
 
 let private characterCard (content: Content option) (dispatch: Msg -> unit) (c: Character) =
     Html.div
@@ -222,12 +328,24 @@ let private characterCard (content: Content option) (dispatch: Msg -> unit) (c: 
                                       [ Html.h3 [ prop.className "ll-card__title"; prop.text c.Name ]
                                         Html.div
                                             [ prop.className "ll-card__sub"
-                                              prop.text (sprintf "%s · %s" (raceName content c.RaceId) (vocationName content c.VocationId)) ] ] ]
-                            Html.button
-                                [ prop.className "ll-btn ll-btn--danger ll-btn--sm"
-                                  prop.text "Delete"
-                                  prop.onClick (fun _ -> dispatch (Delete c.Id)) ] ] ]
-                // Derived stats
+                                              prop.text (
+                                                  sprintf
+                                                      "%s · %s%s"
+                                                      (nameOf (raceOptions content) c.RaceId)
+                                                      (nameOf (vocationOptions content) c.VocationId)
+                                                      (if c.Specialty = "" then "" else " · " + c.Specialty)
+                                              ) ] ] ]
+                            Html.div
+                                [ prop.className "ll-btn-row"
+                                  prop.children
+                                      [ Html.button
+                                            [ prop.className "ll-btn ll-btn--sm"
+                                              prop.text "Open Sheet"
+                                              prop.onClick (fun _ -> dispatch (OpenSheet c)) ]
+                                        Html.button
+                                            [ prop.className "ll-btn ll-btn--danger ll-btn--sm"
+                                              prop.text "Delete"
+                                              prop.onClick (fun _ -> dispatch (Delete c.Id)) ] ] ] ] ]
                 Html.div
                     [ prop.className "ll-stats"
                       prop.children
@@ -235,43 +353,15 @@ let private characterCard (content: Content option) (dispatch: Msg -> unit) (c: 
                             statTile "" "Mass" (string c.Mass) ""
                             statTile "" "Speed" (string c.SpeedClass) "SC"
                             statTile "" "Soul" (string c.SoulTier) "ST"
-                            statTile "" "Injuries" (string c.Injuries) (sprintf "/ %d" c.MaxInjuries)
+                            statTile "" "Glint" (string c.Glint) ""
                             statTile "" "Ext. WP" (string c.ExtendedWillpower) "" ] ]
-                // Primary stats (modifiers from the shared Mechanics)
-                Html.div [ prop.className "ll-section-label"; prop.text "Primary Stats" ]
                 Html.div
                     [ prop.className "ll-stats"
                       prop.children
                           [ for stat in PrimaryStat.all do
                                 let v = c.Primary.Value stat
                                 let variant = "ll-stat--" + (PrimaryStat.name stat).ToLower()
-                                statTile variant (PrimaryStat.name stat) (string v) (fmtMod (Mechanics.primaryModifier v)) ] ]
-                // Secondary stats
-                Html.div [ prop.className "ll-section-label"; prop.text "Secondary Stats" ]
-                Html.div
-                    [ prop.className "ll-stats"
-                      prop.children
-                          [ for stat in SecondaryStat.all do
-                                let v = c.Secondary.Value stat
-                                let variant = "ll-stat--" + (SecondaryStat.name stat).ToLower()
-
-                                let sub =
-                                    match Mechanics.secondaryModifier stat v with
-                                    | Some n -> fmtMod n
-                                    | None -> "—"
-
-                                statTile variant (SecondaryStat.name stat) (string v) sub ] ] ] ]
-
-let private selectField (label: string) (value: string) (options: (string * string) list) (onChange: string -> unit) =
-    Html.div
-        [ prop.className "ll-field"
-          prop.children
-              [ Html.label [ prop.className "ll-label"; prop.text label ]
-                Html.select
-                    [ prop.className "ll-select"
-                      prop.value value
-                      prop.onChange onChange
-                      prop.children [ for (v, t) in options -> Html.option [ prop.value v; prop.text t ] ] ] ] ]
+                                statTile variant (PrimaryStat.name stat) (string v) (fmtMod (Mechanics.primaryModifier v)) ] ] ] ]
 
 // ---------------------------------------------------------------------------
 // Chrome: nav + footer
@@ -289,10 +379,7 @@ let private navbar (user: User) (page: Page) (dispatch: Msg -> unit) =
                           [ Html.img [ prop.className "ll-nav__logo"; prop.src "/nav-logo.ico"; prop.alt "Lords & Legends" ]
                             Html.span [ prop.className "ll-nav__brand"; prop.text "Lords & Legends" ]
                             Html.span [ prop.className "ll-nav__user"; prop.text (sprintf "Signed in as %s" user.Username) ]
-                            Html.button
-                                [ prop.className "ll-nav__link"
-                                  prop.text "Log out"
-                                  prop.onClick (fun _ -> dispatch Logout) ] ] ]
+                            Html.button [ prop.className "ll-nav__link"; prop.text "Log out"; prop.onClick (fun _ -> dispatch Logout) ] ] ]
                 Html.div
                     [ prop.className "ll-subnav"
                       prop.children
@@ -301,17 +388,15 @@ let private navbar (user: User) (page: Page) (dispatch: Msg -> unit) =
                                   prop.text "Character Creator"
                                   prop.onClick (fun _ -> dispatch (GoTo CreateForm)) ]
                             Html.button
-                                [ prop.className (subCls (page = CharacterList))
+                                [ prop.className (subCls (page = CharacterList || page = Sheet))
                                   prop.text "Characters"
                                   prop.onClick (fun _ -> dispatch (GoTo CharacterList)) ] ] ] ] ]
 
 let private footer =
-    Html.footer
-        [ prop.className "ll-footer"
-          prop.text (sprintf "© %d Lords and Legends" (System.DateTime.Now.Year)) ]
+    Html.footer [ prop.className "ll-footer"; prop.text (sprintf "© %d Lords and Legends" (System.DateTime.Now.Year)) ]
 
 // ---------------------------------------------------------------------------
-// Pages
+// Auth page
 // ---------------------------------------------------------------------------
 
 let private authView (model: Model) (dispatch: Msg -> unit) =
@@ -328,14 +413,7 @@ let private authView (model: Model) (dispatch: Msg -> unit) =
               [ prop.className "ll-panel ll-panel--narrow"
                 prop.children
                     [ Html.h2 [ prop.className "ll-auth-title"; prop.text (if isRegister then "Create an Account" else "Sign In") ]
-                      Html.div
-                          [ prop.className "ll-field"
-                            prop.children
-                                [ Html.label [ prop.className "ll-label"; prop.text "Username" ]
-                                  Html.input
-                                      [ prop.className "ll-input"
-                                        prop.value model.Username
-                                        prop.onChange (SetUsername >> dispatch) ] ] ]
+                      textField "Username" model.Username (SetUsername >> dispatch)
                       Html.div
                           [ prop.className "ll-field"
                             prop.children
@@ -360,8 +438,11 @@ let private authView (model: Model) (dispatch: Msg -> unit) =
                                 [ Html.button
                                       [ prop.className "ll-link-btn"
                                         prop.text (if isRegister then "Have an account? Sign in" else "New here? Create an account")
-                                        prop.onClick (fun _ ->
-                                            dispatch (SetAuthMode(if isRegister then LoginMode else RegisterMode))) ] ] ] ] ] ]
+                                        prop.onClick (fun _ -> dispatch (SetAuthMode(if isRegister then LoginMode else RegisterMode))) ] ] ] ] ] ]
+
+// ---------------------------------------------------------------------------
+// Character list page
+// ---------------------------------------------------------------------------
 
 let private listPage (model: Model) (dispatch: Msg -> unit) =
     Html.div
@@ -371,77 +452,332 @@ let private listPage (model: Model) (dispatch: Msg -> unit) =
                     [ prop.style [ style.display.flex; style.justifyContent.spaceBetween; style.alignItems.center; style.marginBottom 20 ]
                       prop.children
                           [ Html.h1 [ prop.className "ll-page-title"; prop.style [ style.marginBottom 0 ]; prop.text "Your Characters" ]
-                            Html.button
-                                [ prop.className "ll-btn ll-btn--accent"
-                                  prop.text "+ New Character"
-                                  prop.onClick (fun _ -> dispatch (GoTo CreateForm)) ] ] ]
+                            Html.button [ prop.className "ll-btn ll-btn--accent"; prop.text "+ New Character"; prop.onClick (fun _ -> dispatch (GoTo CreateForm)) ] ] ]
                 if List.isEmpty model.Characters then
                     Html.p [ prop.className "ll-muted"; prop.text "No characters yet. Create your first adventurer." ]
                 else
                     Html.div [ prop.children [ for c in model.Characters -> characterCard model.Content dispatch c ] ] ] ]
 
+// ---------------------------------------------------------------------------
+// Multi-step creator
+// ---------------------------------------------------------------------------
+
+let private stepper (current: int) =
+    let labels = [ 1, "Identity"; 2, "Stats"; 3, "Review" ]
+
+    Html.div
+        [ prop.className "ll-steps"
+          prop.children
+              [ for (n, label) in labels ->
+                    Html.div
+                        [ prop.className (if n = current then "ll-step is-active" elif n < current then "ll-step is-done" else "ll-step")
+                          prop.children [ Html.span [ prop.className "ll-step__num"; prop.text (string n) ]; Html.span [ prop.text label ] ] ] ] ]
+
 let private createPage (model: Model) (dispatch: Msg -> unit) =
-    let races = model.Content |> Option.map (fun c -> c.Races) |> Option.defaultValue []
-    let vocations = model.Content |> Option.map (fun c -> c.Vocations) |> Option.defaultValue []
     let prim = StatGeneration.primaryArray model.Array
     let sec = StatGeneration.secondaryArray model.Array
+
+    let stepBody =
+        match model.Step with
+        | 1 ->
+            Html.div
+                [ textField "Name" model.Name (SetName >> dispatch)
+                  selectField "Race" model.RaceId (raceOptions model.Content) (SetRace >> dispatch)
+                  selectField "Vocation" model.VocationId (vocationOptions model.Content) (SetVocation >> dispatch)
+                  textField "Specialty" model.Specialty (SetSpecialty >> dispatch)
+                  textField "Height" model.Height (SetHeight >> dispatch)
+                  numField "Age" model.Age (SetAge >> dispatch) ]
+        | 2 ->
+            Html.div
+                [ selectField
+                      "Stat Array (Hard Start)"
+                      (match model.Array with
+                       | NormalPerson -> "normal"
+                       | Adventurer -> "adventurer")
+                      [ "normal", "Normal Person"; "adventurer", "Adventurer" ]
+                      (fun v -> dispatch (SetArray(if v = "adventurer" then Adventurer else NormalPerson)))
+                  Html.div
+                      [ prop.className "ll-alert ll-alert--info"
+                        prop.children
+                            [ Html.strong [ prop.text "Primary: " ]
+                              Html.span [ prop.text (prim |> List.map string |> String.concat ", ") ]
+                              Html.br []
+                              Html.strong [ prop.text "Secondary (WP / Fer / Arc): " ]
+                              Html.span [ prop.text (sec |> List.map string |> String.concat ", ") ] ] ]
+                  numField "HP Roll (2d8)" model.HpRoll (SetHpRoll >> dispatch) ]
+        | _ ->
+            Html.div
+                [ Html.div
+                      [ prop.className "ll-alert ll-alert--info"
+                        prop.children
+                            [ Html.strong [ prop.text (if model.Name = "" then "(unnamed)" else model.Name) ]
+                              Html.text (
+                                  sprintf
+                                      " — %s %s%s"
+                                      (nameOf (raceOptions model.Content) model.RaceId)
+                                      (nameOf (vocationOptions model.Content) model.VocationId)
+                                      (if model.Specialty = "" then "" else ", " + model.Specialty)
+                              )
+                              Html.br []
+                              Html.text (sprintf "Primary %s · Secondary %s · HP roll %d" (prim |> List.map string |> String.concat "/") (sec |> List.map string |> String.concat "/") model.HpRoll) ] ]
+                  Html.p [ prop.className "ll-muted"; prop.text "You can add weapons, spells, gear and more on the character sheet after creating." ] ]
+
+    let navButtons =
+        Html.div
+            [ prop.className "ll-btn-row"
+              prop.style [ style.marginTop 8 ]
+              prop.children
+                  [ if model.Step > 1 then
+                        Html.button [ prop.className "ll-btn ll-btn--ghost"; prop.text "Back"; prop.onClick (fun _ -> dispatch (SetStep(model.Step - 1))) ]
+                    if model.Step < 3 then
+                        Html.button
+                            [ prop.className "ll-btn ll-btn--accent"
+                              prop.disabled (model.Step = 1 && model.Name.Trim() = "")
+                              prop.text "Next"
+                              prop.onClick (fun _ -> dispatch (SetStep(model.Step + 1))) ]
+                    else
+                        Html.button
+                            [ prop.className "ll-btn ll-btn--accent"
+                              prop.disabled (model.Loading || model.Name.Trim() = "")
+                              prop.text "Create Character"
+                              prop.onClick (fun _ -> dispatch Submit) ]
+                    Html.button [ prop.className "ll-btn ll-btn--ghost"; prop.text "Cancel"; prop.onClick (fun _ -> dispatch (GoTo CharacterList)) ] ] ]
 
     Html.div
         [ prop.className "ll-panel ll-panel--narrow"
           prop.children
               [ Html.h1 [ prop.className "ll-page-title"; prop.text "Create a Character" ]
-                Html.div
-                    [ prop.className "ll-field"
-                      prop.children
-                          [ Html.label [ prop.className "ll-label"; prop.text "Name" ]
-                            Html.input
-                                [ prop.className "ll-input"
-                                  prop.value model.Name
-                                  prop.onChange (SetName >> dispatch) ] ] ]
-                selectField "Race" model.RaceId [ for r in races -> r.Id, r.Name ] (SetRace >> dispatch)
-                selectField "Vocation" model.VocationId [ for v in vocations -> v.Id, v.Name ] (SetVocation >> dispatch)
-                selectField
-                    "Stat Array (Hard Start)"
-                    (match model.Array with
-                     | NormalPerson -> "normal"
-                     | Adventurer -> "adventurer")
-                    [ "normal", "Normal Person"; "adventurer", "Adventurer" ]
-                    (fun v -> dispatch (SetArray(if v = "adventurer" then Adventurer else NormalPerson)))
-                Html.div
-                    [ prop.className "ll-alert ll-alert--info"
-                      prop.children
-                          [ Html.strong [ prop.text "Primary: " ]
-                            Html.span [ prop.text (prim |> List.map string |> String.concat ", ") ]
-                            Html.br []
-                            Html.strong [ prop.text "Secondary (WP / Fer / Arc): " ]
-                            Html.span [ prop.text (sec |> List.map string |> String.concat ", ") ] ] ]
-                Html.div
-                    [ prop.className "ll-field"
-                      prop.children
-                          [ Html.label [ prop.className "ll-label"; prop.text "HP Roll (2d8)" ]
-                            Html.input
-                                [ prop.className "ll-input"
-                                  prop.type' "number"
-                                  prop.value model.HpRoll
-                                  prop.onChange (fun (v: string) ->
-                                      match System.Int32.TryParse v with
-                                      | true, n -> dispatch (SetHpRoll n)
-                                      | _ -> ()) ] ] ]
+                stepper model.Step
+                stepBody
                 (match model.Error with
                  | Some e -> Html.div [ prop.className "ll-alert ll-alert--error"; prop.text e ]
                  | None -> Html.none)
-                Html.div
-                    [ prop.className "ll-btn-row"
+                navButtons ] ]
+
+// ---------------------------------------------------------------------------
+// Editable character sheet
+// ---------------------------------------------------------------------------
+
+let private sheetSection (title: string) (children: ReactElement list) =
+    Html.div
+        [ prop.className "ll-sheet-section"
+          prop.children [ Html.div [ prop.className "ll-section-label"; prop.text title ]; yield! children ] ]
+
+/// Render an editable collection: a row per item + an "add" button.
+let private collectionEditor
+    (title: string)
+    (addLabel: string)
+    (rows: ReactElement list)
+    (onAdd: unit -> unit)
+    =
+    sheetSection
+        title
+        [ yield! rows
+          Html.button [ prop.className "ll-btn ll-btn--sm"; prop.style [ style.marginTop 6 ]; prop.text addLabel; prop.onClick (fun _ -> onAdd ()) ] ]
+
+let private itemRow (fields: ReactElement list) (onRemove: unit -> unit) =
+    Html.div
+        [ prop.className "ll-item-row"
+          prop.children
+              [ yield! fields
+                Html.button [ prop.className "ll-btn ll-btn--danger ll-btn--sm ll-item-x"; prop.text "✕"; prop.onClick (fun _ -> onRemove ()) ] ] ]
+
+let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
+    let d f = dispatch (UpdateDraft f)
+
+    // Identity
+    let identity =
+        sheetSection
+            "Identity"
+            [ Html.div
+                  [ prop.className "ll-grid-2"
+                    prop.children
+                        [ textField "Name" c.Name (fun v -> d (fun x -> { x with Name = v }))
+                          textField "Specialty" c.Specialty (fun v -> d (fun x -> { x with Specialty = v }))
+                          selectField "Race" c.RaceId (raceOptions model.Content) (fun v -> d (fun x -> { x with RaceId = v }))
+                          selectField "Vocation" c.VocationId (vocationOptions model.Content) (fun v -> d (fun x -> { x with VocationId = v }))
+                          textField "Height" c.Height (fun v -> d (fun x -> { x with Height = v }))
+                          numField "Age" c.Age (fun v -> d (fun x -> { x with Age = v })) ] ] ]
+
+    // Vitals & pools
+    let vitals =
+        sheetSection
+            "Vitals & Pools"
+            [ Html.div
+                  [ prop.className "ll-grid-4"
+                    prop.children
+                        [ numField "Current HP" c.CurrentHp (fun v -> d (fun x -> { x with CurrentHp = v }))
+                          numField "Max HP" c.MaxHp (fun v -> d (fun x -> { x with MaxHp = v }))
+                          numField "Injuries" c.Injuries (fun v -> d (fun x -> { x with Injuries = v }))
+                          numField "Max Injuries" c.MaxInjuries (fun v -> d (fun x -> { x with MaxInjuries = v }))
+                          numField "Mass" c.Mass (fun v -> d (fun x -> { x with Mass = v }))
+                          numField "Speed Class" c.SpeedClass (fun v -> d (fun x -> { x with SpeedClass = v }))
+                          numField "Soul Tier" c.SoulTier (fun v -> d (fun x -> { x with SoulTier = v }))
+                          numField "Ext. Willpower" c.ExtendedWillpower (fun v -> d (fun x -> { x with ExtendedWillpower = v }))
+                          numField "Focus Points" c.FocusPoints (fun v -> d (fun x -> { x with FocusPoints = v }))
+                          numField "Glint" c.Glint (fun v -> d (fun x -> { x with Glint = v }))
+                          numField "Temp HP" c.Thp (fun v -> d (fun x -> { x with Thp = v }))
+                          numField "AR" c.Ar (fun v -> d (fun x -> { x with Ar = v }))
+                          numField "OS" c.Os (fun v -> d (fun x -> { x with Os = v }))
+                          numField "MR" c.Mr (fun v -> d (fun x -> { x with Mr = v })) ] ] ]
+
+    // Stats (editable, with live modifiers)
+    let statInput (label: string) (value: int) (modifier: string) (onChange: int -> unit) =
+        Html.div
+            [ prop.className "ll-statedit"
+              prop.children
+                  [ Html.div [ prop.className "ll-stat__label"; prop.text label ]
+                    Html.input
+                        [ prop.className "ll-input ll-statedit__input"
+                          prop.type' "number"
+                          prop.value value
+                          prop.onChange (fun (v: string) ->
+                              match System.Int32.TryParse v with
+                              | true, n -> onChange n
+                              | _ -> ()) ]
+                    Html.div [ prop.className "ll-stat__mod"; prop.text modifier ] ] ]
+
+    let primaryStats =
+        sheetSection
+            "Primary Stats"
+            [ Html.div
+                  [ prop.className "ll-stats"
+                    prop.children
+                        [ statInput "Might" c.Primary.Might (fmtMod (Mechanics.primaryModifier c.Primary.Might)) (fun v -> d (fun x -> { x with Primary = { x.Primary with Might = v } }))
+                          statInput "Agility" c.Primary.Agility (fmtMod (Mechanics.primaryModifier c.Primary.Agility)) (fun v -> d (fun x -> { x with Primary = { x.Primary with Agility = v } }))
+                          statInput "Vitality" c.Primary.Vitality (fmtMod (Mechanics.primaryModifier c.Primary.Vitality)) (fun v -> d (fun x -> { x with Primary = { x.Primary with Vitality = v } }))
+                          statInput "Intelligence" c.Primary.Intelligence (fmtMod (Mechanics.primaryModifier c.Primary.Intelligence)) (fun v -> d (fun x -> { x with Primary = { x.Primary with Intelligence = v } }))
+                          statInput "Cunning" c.Primary.Cunning (fmtMod (Mechanics.primaryModifier c.Primary.Cunning)) (fun v -> d (fun x -> { x with Primary = { x.Primary with Cunning = v } }))
+                          statInput "Presence" c.Primary.Presence (fmtMod (Mechanics.primaryModifier c.Primary.Presence)) (fun v -> d (fun x -> { x with Primary = { x.Primary with Presence = v } })) ] ] ]
+
+    let secondaryStats =
+        let secMod stat v =
+            match Mechanics.secondaryModifier stat v with
+            | Some n -> fmtMod n
+            | None -> "—"
+
+        sheetSection
+            "Secondary Stats"
+            [ Html.div
+                  [ prop.className "ll-stats"
+                    prop.children
+                        [ statInput "Willpower" c.Secondary.Willpower (secMod Willpower c.Secondary.Willpower) (fun v -> d (fun x -> { x with Secondary = { x.Secondary with Willpower = v } }))
+                          statInput "Ferocity" c.Secondary.Ferocity (secMod Ferocity c.Secondary.Ferocity) (fun v -> d (fun x -> { x with Secondary = { x.Secondary with Ferocity = v } }))
+                          statInput "Arcana" c.Secondary.Arcana (secMod Arcana c.Secondary.Arcana) (fun v -> d (fun x -> { x with Secondary = { x.Secondary with Arcana = v } })) ] ] ]
+
+    // Collections
+    let weapons =
+        collectionEditor
+            "Weapons"
+            "+ Weapon"
+            [ for i, w in List.indexed c.Weapons ->
+                  itemRow
+                      [ inlineBox "Name" w.Name (fun v -> d (fun x -> { x with Weapons = updateAt i (fun it -> { it with Name = v }) x.Weapons }))
+                        inlineBox "Damage die" w.DamageDie (fun v -> d (fun x -> { x with Weapons = updateAt i (fun it -> { it with DamageDie = v }) x.Weapons }))
+                        inlineBox "Description" w.Description (fun v -> d (fun x -> { x with Weapons = updateAt i (fun it -> { it with Description = v }) x.Weapons })) ]
+                      (fun () -> d (fun x -> { x with Weapons = removeAt i x.Weapons })) ]
+            (fun () -> d (fun x -> { x with Weapons = x.Weapons @ [ Items.emptyWeapon ] }))
+
+    let spells =
+        collectionEditor
+            "Magic / Spells"
+            "+ Spell"
+            [ for i, s in List.indexed c.Spells ->
+                  itemRow
+                      [ inlineBox "Name" s.Name (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with Name = v }) x.Spells }))
+                        inlineBox "Die" s.DamageDie (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with DamageDie = v }) x.Spells }))
+                        inlineBox "Cost" s.Cost (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with Cost = v }) x.Spells }))
+                        inlineBox "Action" s.ActionType (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with ActionType = v }) x.Spells }))
+                        inlineBox "Description" s.Description (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with Description = v }) x.Spells })) ]
+                      (fun () -> d (fun x -> { x with Spells = removeAt i x.Spells })) ]
+            (fun () -> d (fun x -> { x with Spells = x.Spells @ [ Items.emptySpell ] }))
+
+    let skills =
+        collectionEditor
+            "Skills"
+            "+ Skill"
+            [ for i, s in List.indexed c.Skills ->
+                  itemRow
+                      [ inlineBox "Name" s.Name (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with Name = v }) x.Skills }))
+                        inlineBox "Die" s.DamageDie (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with DamageDie = v }) x.Skills }))
+                        inlineBox "Cost" s.Cost (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with Cost = v }) x.Skills }))
+                        inlineBox "Action" s.ActionType (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with ActionType = v }) x.Skills }))
+                        inlineBox "Description" s.Description (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with Description = v }) x.Skills })) ]
+                      (fun () -> d (fun x -> { x with Skills = removeAt i x.Skills })) ]
+            (fun () -> d (fun x -> { x with Skills = x.Skills @ [ Items.emptySkill ] }))
+
+    let equipment =
+        collectionEditor
+            "Equipment"
+            "+ Item"
+            [ for i, e in List.indexed c.Equipment ->
+                  itemRow
+                      [ inlineBox "Name" e.Name (fun v -> d (fun x -> { x with Equipment = updateAt i (fun it -> { it with Name = v }) x.Equipment }))
+                        inlineBox "Type" e.ItemType (fun v -> d (fun x -> { x with Equipment = updateAt i (fun it -> { it with ItemType = v }) x.Equipment }))
+                        inlineBox "Description" e.Description (fun v -> d (fun x -> { x with Equipment = updateAt i (fun it -> { it with Description = v }) x.Equipment })) ]
+                      (fun () -> d (fun x -> { x with Equipment = removeAt i x.Equipment })) ]
+            (fun () -> d (fun x -> { x with Equipment = x.Equipment @ [ Items.emptyEquipment ] }))
+
+    let languages =
+        collectionEditor
+            "Languages"
+            "+ Language"
+            [ for i, l in List.indexed c.Languages ->
+                  itemRow
+                      [ inlineBox "Language" l (fun v -> d (fun x -> { x with Languages = updateAt i (fun _ -> v) x.Languages })) ]
+                      (fun () -> d (fun x -> { x with Languages = removeAt i x.Languages })) ]
+            (fun () -> d (fun x -> { x with Languages = x.Languages @ [ "" ] }))
+
+    let microStats =
+        collectionEditor
+            "Micro-stats"
+            "+ Micro-stat"
+            [ for i, ms in List.indexed c.MicroStats ->
+                  itemRow
+                      [ inlineBox "Name" ms.Name (fun v -> d (fun x -> { x with MicroStats = updateAt i (fun it -> { it with Name = v }) x.MicroStats }))
+                        Html.input
+                            [ prop.className "ll-input ll-inline ll-inline--num"
+                              prop.type' "number"
+                              prop.value ms.Value
+                              prop.onChange (fun (v: string) ->
+                                  match System.Int32.TryParse v with
+                                  | true, n -> d (fun x -> { x with MicroStats = updateAt i (fun it -> { it with Value = n }) x.MicroStats })
+                                  | _ -> ()) ] ]
+                      (fun () -> d (fun x -> { x with MicroStats = removeAt i x.MicroStats })) ]
+            (fun () -> d (fun x -> { x with MicroStats = x.MicroStats @ [ Items.emptyMicroStat ] }))
+
+    Html.div
+        [ prop.className "ll-panel"
+          prop.children
+              [ Html.div
+                    [ prop.className "ll-sheet-head"
                       prop.children
-                          [ Html.button
-                                [ prop.className "ll-btn ll-btn--accent"
-                                  prop.disabled (model.Loading || model.Name.Trim() = "")
-                                  prop.text "Create"
-                                  prop.onClick (fun _ -> dispatch Submit) ]
-                            Html.button
-                                [ prop.className "ll-btn ll-btn--ghost"
-                                  prop.text "Cancel"
-                                  prop.onClick (fun _ -> dispatch (GoTo CharacterList)) ] ] ] ] ]
+                          [ Html.div
+                                [ prop.children
+                                      [ Html.h1 [ prop.className "ll-page-title"; prop.style [ style.marginBottom 0; style.textAlign.left ]; prop.text (if c.Name = "" then "(unnamed)" else c.Name) ]
+                                        Html.div [ prop.className "ll-muted"; prop.text (sprintf "%s · %s" (nameOf (raceOptions model.Content) c.RaceId) (nameOf (vocationOptions model.Content) c.VocationId)) ] ] ]
+                            Html.div
+                                [ prop.className "ll-btn-row"
+                                  prop.children
+                                      [ (match model.SaveMsg with
+                                         | Some m -> Html.span [ prop.className "ll-saved-msg"; prop.text m ]
+                                         | None -> Html.none)
+                                        Html.button [ prop.className "ll-btn ll-btn--ghost"; prop.text "Back"; prop.onClick (fun _ -> dispatch (GoTo CharacterList)) ]
+                                        Html.button
+                                            [ prop.className "ll-btn ll-btn--accent"
+                                              prop.disabled model.Saving
+                                              prop.text (if model.Saving then "Saving…" else "Save")
+                                              prop.onClick (fun _ -> dispatch SaveDraft) ] ] ] ] ]
+                identity
+                vitals
+                primaryStats
+                secondaryStats
+                weapons
+                spells
+                skills
+                equipment
+                languages
+                microStats ] ]
 
 // ---------------------------------------------------------------------------
 // Root view
@@ -458,22 +794,17 @@ let view (model: Model) (dispatch: Msg -> unit) =
                     [ prop.className "ll-main"
                       prop.children
                           [ if model.CheckingAuth then
-                                Html.div
-                                    [ prop.className "ll-panel ll-panel--narrow"
-                                      prop.style [ style.textAlign.center ]
-                                      prop.text "Loading…" ]
+                                Html.div [ prop.className "ll-panel ll-panel--narrow"; prop.style [ style.textAlign.center ]; prop.text "Loading…" ]
                             else
                                 match model.CurrentUser with
                                 | None -> authView model dispatch
                                 | Some _ ->
-                                    match model.Page with
-                                    | CharacterList -> listPage model dispatch
-                                    | CreateForm -> createPage model dispatch ] ]
+                                    match model.Page, model.Draft with
+                                    | CharacterList, _ -> listPage model dispatch
+                                    | CreateForm, _ -> createPage model dispatch
+                                    | Sheet, Some c -> sheetPage model c dispatch
+                                    | Sheet, None -> listPage model dispatch ] ]
                 footer ] ]
-
-// ---------------------------------------------------------------------------
-// Program
-// ---------------------------------------------------------------------------
 
 Program.mkProgram init update view
 |> Program.withReactSynchronous "root"

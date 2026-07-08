@@ -107,20 +107,68 @@ type Vocation =
       StartingSkills: string list }
 
 // ---------------------------------------------------------------------------
-// The character itself. Note what is NOT here: a column per skill. Flexible,
-// content-driven collections (skills, inventory) hang off this by id.
+// Per-character collections. These mirror the original app's weapons / spells /
+// skills / equipment / languages / micro-stats, but are stored as typed JSONB
+// lists on the character (not one table each), so adding a field to any of
+// them is a one-line change with no migration.
+// ---------------------------------------------------------------------------
+
+type Weapon =
+    { Name: string
+      DamageDie: string
+      Description: string }
+
+type Spell =
+    { Name: string
+      DamageDie: string
+      Cost: string
+      ActionType: string
+      Description: string }
+
+type Skill =
+    { Name: string
+      DamageDie: string
+      ActionType: string
+      Cost: string
+      Description: string }
+
+type EquipmentItem =
+    { Name: string
+      ItemType: string
+      Description: string }
+
+/// A granular sub-stat (the original's "micro-stats"): a name and a value.
+type MicroStat = { Name: string; Value: int }
+
+[<RequireQualifiedAccess>]
+module Items =
+    let emptyWeapon = { Name = ""; DamageDie = ""; Description = "" }
+    let emptySpell = { Name = ""; DamageDie = ""; Cost = ""; ActionType = ""; Description = "" }
+    let emptySkill = { Name = ""; DamageDie = ""; ActionType = ""; Cost = ""; Description = "" }
+    let emptyEquipment = { Name = ""; ItemType = ""; Description = "" }
+    let emptyMicroStat = { Name = ""; Value = 0 }
+
+// ---------------------------------------------------------------------------
+// The character aggregate. The 9 ruleset stats are structured records; every
+// open-ended list is a typed collection persisted as JSONB. No column-per-item.
 // ---------------------------------------------------------------------------
 
 type Character =
     { Id: int
       OwnerId: int
+      // Identity
       Name: string
       RaceId: string
       VocationId: string
+      Specialty: string
+      Height: string
+      Age: int
+      // Stats
       Primary: PrimaryStats
       Secondary: SecondaryStats
       /// Expendable pool; all characters start with 2 (see Mechanics).
       ExtendedWillpower: int
+      // Derived / pools
       MaxHp: int
       CurrentHp: int
       /// Physical density/weight, derived from the chosen Race.
@@ -128,4 +176,19 @@ type Character =
       Injuries: int
       MaxInjuries: int
       SpeedClass: int
-      SoulTier: int }
+      SoulTier: int
+      FocusPoints: int
+      /// In-world currency.
+      Glint: int
+      // Combat sub-values carried over from the original sheet.
+      Thp: int
+      Ar: int
+      Os: int
+      Mr: int
+      // Collections
+      Weapons: Weapon list
+      Spells: Spell list
+      Skills: Skill list
+      Equipment: EquipmentItem list
+      Languages: string list
+      MicroStats: MicroStat list }
