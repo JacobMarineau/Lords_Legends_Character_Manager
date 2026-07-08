@@ -1,0 +1,16 @@
+{
+  "name": "lords-legends-client",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "dotnet fable watch . --run vite",
+    "build": "dotnet fable . --run vite build"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  }
+}

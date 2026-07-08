@@ -1,0 +1,12 @@
+# Keep the build context small and free of host-built (possibly stale or
+# platform-specific) artifacts — the image rebuilds everything from source.
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/fable_modules
+**/*.fs.js
+.git
+.vs
+.vscode
+.DS_Store

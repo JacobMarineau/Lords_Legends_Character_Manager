@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- netstandard2.0 so the same domain code compiles for the .NET server
+       AND is transpiled to JS by Fable on the client. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Domain.fs" />
+    <Compile Include="Mechanics.fs" />
+    <Compile Include="Api.fs" />
+  </ItemGroup>
+
+</Project>

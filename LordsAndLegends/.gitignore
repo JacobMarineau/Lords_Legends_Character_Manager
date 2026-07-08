@@ -1,0 +1,15 @@
+# .NET build output
+bin/
+obj/
+
+# Fable / JS build artifacts
+*.fs.js
+fable_modules/
+src/Client/dist/
+
+# npm
+node_modules/
+
+# Local env
+*.env
+.DS_Store
