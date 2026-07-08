@@ -151,6 +151,30 @@ module Items =
     let emptyMicroStat: MicroStat = { Name = ""; Value = 0 }
 
 // ---------------------------------------------------------------------------
+// Minor Stats: a FIXED taxonomy (from the Final Stat Structure doc), each
+// governed by a major stat — distinct from the free-form Micro-stats above.
+// The taxonomy is data here; a character stores only the values it has set.
+// ---------------------------------------------------------------------------
+
+[<RequireQualifiedAccess>]
+module MinorStats =
+    /// Minor stats grouped by their governing major stat ("Special" = ungoverned).
+    let groups: (string * string list) list =
+        [ "Might", [ "Athletics"; "Lifting"; "Intimidation" ]
+          "Agility", [ "Acrobatics"; "Weapon Mastery"; "Balance"; "Performance" ]
+          "Vitality", [ "Endurance"; "Resistance"; "Recovery" ]
+          "Intelligence", [ "History"; "Science"; "Technology"; "Foraging" ]
+          "Cunning", [ "Sleight of Hand"; "Stealth"; "Instinct"; "Deception" ]
+          "Presence", [ "Leadership"; "Persuasion"; "Bargaining"; "Charm" ]
+          "Willpower", [ "Feat of Heroism"; "Counter-Charisma"; "Focus" ]
+          "Ferocity", [ "Physical Save Modifier" ]
+          "Arcana", [ "Magical Knowledge"; "Magic Save Modifier" ]
+          "Special", [ "Insight"; "Perception"; "Medicine" ] ]
+
+    /// Flat list of every minor stat name.
+    let all = groups |> List.collect snd
+
+// ---------------------------------------------------------------------------
 // The character aggregate. The 9 ruleset stats are structured records; every
 // open-ended list is a typed collection persisted as JSONB. No column-per-item.
 // ---------------------------------------------------------------------------
@@ -193,4 +217,6 @@ type Character =
       Skills: Skill list
       Equipment: EquipmentItem list
       Languages: string list
-      MicroStats: MicroStat list }
+      MicroStats: MicroStat list
+      /// Values for the fixed Minor Stat taxonomy (name -> modifier); unset = 0.
+      MinorStats: Map<string, int> }

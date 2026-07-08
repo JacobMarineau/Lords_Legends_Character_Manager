@@ -71,7 +71,8 @@ let private buildCharacter (ownerId: int) (nc: NewCharacter) : Character =
       Skills = []
       Equipment = []
       Languages = []
-      MicroStats = [] }
+      MicroStats = []
+      MinorStats = Map.empty }
 
 // -- Auth API ---------------------------------------------------------------
 

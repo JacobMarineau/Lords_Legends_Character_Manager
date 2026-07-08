@@ -489,3 +489,94 @@ h1, h2, h3, h4, h5 {
   flex: 0 0 auto;
   padding: 5px 9px;
 }
+
+/* Collection item cards */
+.ll-cardlist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.ll-itemcard {
+  position: relative;
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px 12px 12px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
+  border-top: 4px solid var(--accent);
+}
+.ll-itemcard__x {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  border: none;
+  background: transparent;
+  color: var(--stat-ferocity);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+.ll-itemcard__x:hover {
+  background: var(--stat-ferocity);
+  color: #fff;
+}
+.ll-cardgrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ll-cardfield {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ll-cardfield__label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--heading-footer);
+}
+.ll-input--sm {
+  padding: 6px 8px;
+  font-size: 14px;
+}
+
+/* Minor stats (grouped by governing major stat) */
+.ll-minorgroup {
+  margin-bottom: 12px;
+}
+.ll-minorgroup__title {
+  font-family: var(--font-heading);
+  color: var(--heading-footer);
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(94, 88, 75, 0.25);
+  padding-bottom: 3px;
+}
+.ll-minorgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 6px 10px;
+}
+.ll-minorstat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+.ll-minorstat__label {
+  font-size: 13px;
+  color: var(--text-dark);
+}
+.ll-minorstat__input {
+  width: 56px;
+  text-align: center;
+  padding: 4px;
+  font-weight: 700;
+}

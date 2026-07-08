@@ -563,24 +563,36 @@ let private sheetSection (title: string) (children: ReactElement list) =
         [ prop.className "ll-sheet-section"
           prop.children [ Html.div [ prop.className "ll-section-label"; prop.text title ]; yield! children ] ]
 
-/// Render an editable collection: a row per item + an "add" button.
+/// Render an editable collection as a grid of item cards + an "add" button.
 let private collectionEditor
     (title: string)
     (addLabel: string)
-    (rows: ReactElement list)
+    (cards: ReactElement list)
     (onAdd: unit -> unit)
     =
     sheetSection
         title
-        [ yield! rows
+        [ (if List.isEmpty cards then
+               Html.none
+           else
+               Html.div [ prop.className "ll-cardlist"; prop.children cards ])
           Html.button [ prop.className "ll-btn ll-btn--sm"; prop.style [ style.marginTop 6 ]; prop.text addLabel; prop.onClick (fun _ -> onAdd ()) ] ]
 
-let private itemRow (fields: ReactElement list) (onRemove: unit -> unit) =
-    Html.div
-        [ prop.className "ll-item-row"
+/// One labeled field inside an item card.
+let private cardBox (label: string) (value: string) (onChange: string -> unit) =
+    Html.label
+        [ prop.className "ll-cardfield"
           prop.children
-              [ yield! fields
-                Html.button [ prop.className "ll-btn ll-btn--danger ll-btn--sm ll-item-x"; prop.text "✕"; prop.onClick (fun _ -> onRemove ()) ] ] ]
+              [ Html.span [ prop.className "ll-cardfield__label"; prop.text label ]
+                Html.input [ prop.className "ll-input ll-input--sm"; prop.value value; prop.onChange onChange ] ] ]
+
+/// A neat card for a single collection item, with a corner delete button.
+let private itemCard (fields: ReactElement list) (onRemove: unit -> unit) =
+    Html.div
+        [ prop.className "ll-itemcard"
+          prop.children
+              [ Html.button [ prop.className "ll-itemcard__x"; prop.text "✕"; prop.onClick (fun _ -> onRemove ()) ]
+                Html.div [ prop.className "ll-cardgrid"; prop.children fields ] ] ]
 
 let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
     let d f = dispatch (UpdateDraft f)
@@ -613,7 +625,6 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
                           numField "Mass" c.Mass (fun v -> d (fun x -> { x with Mass = v }))
                           numField "Speed Class" c.SpeedClass (fun v -> d (fun x -> { x with SpeedClass = v }))
                           numField "Soul Tier" c.SoulTier (fun v -> d (fun x -> { x with SoulTier = v }))
-                          numField "Ext. Willpower" c.ExtendedWillpower (fun v -> d (fun x -> { x with ExtendedWillpower = v }))
                           numField "Focus Points" c.FocusPoints (fun v -> d (fun x -> { x with FocusPoints = v }))
                           numField "Glint" c.Glint (fun v -> d (fun x -> { x with Glint = v }))
                           numField "Temp HP" c.Thp (fun v -> d (fun x -> { x with Thp = v }))
@@ -661,20 +672,49 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
             [ Html.div
                   [ prop.className "ll-stats"
                     prop.children
-                        [ statInput "Willpower" c.Secondary.Willpower (secMod Willpower c.Secondary.Willpower) (fun v -> d (fun x -> { x with Secondary = { x.Secondary with Willpower = v } }))
+                        [ statInput "Willpower · Innate" c.Secondary.Willpower "cost" (fun v -> d (fun x -> { x with Secondary = { x.Secondary with Willpower = v } }))
+                          statInput "Willpower · Extended" c.ExtendedWillpower "pool" (fun v -> d (fun x -> { x with ExtendedWillpower = v }))
                           statInput "Ferocity" c.Secondary.Ferocity (secMod Ferocity c.Secondary.Ferocity) (fun v -> d (fun x -> { x with Secondary = { x.Secondary with Ferocity = v } }))
                           statInput "Arcana" c.Secondary.Arcana (secMod Arcana c.Secondary.Arcana) (fun v -> d (fun x -> { x with Secondary = { x.Secondary with Arcana = v } })) ] ] ]
 
-    // Collections
+    // Minor Stats: the fixed taxonomy, grouped under their governing major stat.
+    let minorStats =
+        let getVal name = c.MinorStats |> Map.tryFind name |> Option.defaultValue 0
+
+        sheetSection
+            "Minor Stats"
+            [ for (group, names) in MinorStats.groups ->
+                  Html.div
+                      [ prop.className "ll-minorgroup"
+                        prop.children
+                            [ Html.div [ prop.className "ll-minorgroup__title"; prop.text group ]
+                              Html.div
+                                  [ prop.className "ll-minorgrid"
+                                    prop.children
+                                        [ for name in names ->
+                                              Html.label
+                                                  [ prop.className "ll-minorstat"
+                                                    prop.children
+                                                        [ Html.span [ prop.className "ll-minorstat__label"; prop.text name ]
+                                                          Html.input
+                                                              [ prop.className "ll-input ll-minorstat__input"
+                                                                prop.type' "number"
+                                                                prop.value (getVal name)
+                                                                prop.onChange (fun (v: string) ->
+                                                                    match System.Int32.TryParse v with
+                                                                    | true, n -> d (fun x -> { x with MinorStats = Map.add name n x.MinorStats })
+                                                                    | _ -> ()) ] ] ] ] ] ] ] ]
+
+    // Collections (rendered as neat cards)
     let weapons =
         collectionEditor
             "Weapons"
             "+ Weapon"
             [ for i, w in List.indexed c.Weapons ->
-                  itemRow
-                      [ inlineBox "Name" w.Name (fun v -> d (fun x -> { x with Weapons = updateAt i (fun it -> { it with Name = v }) x.Weapons }))
-                        inlineBox "Damage die" w.DamageDie (fun v -> d (fun x -> { x with Weapons = updateAt i (fun it -> { it with DamageDie = v }) x.Weapons }))
-                        inlineBox "Description" w.Description (fun v -> d (fun x -> { x with Weapons = updateAt i (fun it -> { it with Description = v }) x.Weapons })) ]
+                  itemCard
+                      [ cardBox "Name" w.Name (fun v -> d (fun x -> { x with Weapons = updateAt i (fun it -> { it with Name = v }) x.Weapons }))
+                        cardBox "Damage die" w.DamageDie (fun v -> d (fun x -> { x with Weapons = updateAt i (fun it -> { it with DamageDie = v }) x.Weapons }))
+                        cardBox "Description" w.Description (fun v -> d (fun x -> { x with Weapons = updateAt i (fun it -> { it with Description = v }) x.Weapons })) ]
                       (fun () -> d (fun x -> { x with Weapons = removeAt i x.Weapons })) ]
             (fun () -> d (fun x -> { x with Weapons = x.Weapons @ [ Items.emptyWeapon ] }))
 
@@ -683,12 +723,12 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
             "Magic / Spells"
             "+ Spell"
             [ for i, s in List.indexed c.Spells ->
-                  itemRow
-                      [ inlineBox "Name" s.Name (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with Name = v }) x.Spells }))
-                        inlineBox "Die" s.DamageDie (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with DamageDie = v }) x.Spells }))
-                        inlineBox "Cost" s.Cost (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with Cost = v }) x.Spells }))
-                        inlineBox "Action" s.ActionType (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with ActionType = v }) x.Spells }))
-                        inlineBox "Description" s.Description (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with Description = v }) x.Spells })) ]
+                  itemCard
+                      [ cardBox "Name" s.Name (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with Name = v }) x.Spells }))
+                        cardBox "Damage die" s.DamageDie (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with DamageDie = v }) x.Spells }))
+                        cardBox "Cost" s.Cost (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with Cost = v }) x.Spells }))
+                        cardBox "Action" s.ActionType (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with ActionType = v }) x.Spells }))
+                        cardBox "Description" s.Description (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with Description = v }) x.Spells })) ]
                       (fun () -> d (fun x -> { x with Spells = removeAt i x.Spells })) ]
             (fun () -> d (fun x -> { x with Spells = x.Spells @ [ Items.emptySpell ] }))
 
@@ -697,12 +737,12 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
             "Skills"
             "+ Skill"
             [ for i, s in List.indexed c.Skills ->
-                  itemRow
-                      [ inlineBox "Name" s.Name (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with Name = v }) x.Skills }))
-                        inlineBox "Die" s.DamageDie (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with DamageDie = v }) x.Skills }))
-                        inlineBox "Cost" s.Cost (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with Cost = v }) x.Skills }))
-                        inlineBox "Action" s.ActionType (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with ActionType = v }) x.Skills }))
-                        inlineBox "Description" s.Description (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with Description = v }) x.Skills })) ]
+                  itemCard
+                      [ cardBox "Name" s.Name (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with Name = v }) x.Skills }))
+                        cardBox "Damage die" s.DamageDie (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with DamageDie = v }) x.Skills }))
+                        cardBox "Cost" s.Cost (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with Cost = v }) x.Skills }))
+                        cardBox "Action" s.ActionType (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with ActionType = v }) x.Skills }))
+                        cardBox "Description" s.Description (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with Description = v }) x.Skills })) ]
                       (fun () -> d (fun x -> { x with Skills = removeAt i x.Skills })) ]
             (fun () -> d (fun x -> { x with Skills = x.Skills @ [ Items.emptySkill ] }))
 
@@ -711,10 +751,10 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
             "Equipment"
             "+ Item"
             [ for i, e in List.indexed c.Equipment ->
-                  itemRow
-                      [ inlineBox "Name" e.Name (fun v -> d (fun x -> { x with Equipment = updateAt i (fun it -> { it with Name = v }) x.Equipment }))
-                        inlineBox "Type" e.ItemType (fun v -> d (fun x -> { x with Equipment = updateAt i (fun it -> { it with ItemType = v }) x.Equipment }))
-                        inlineBox "Description" e.Description (fun v -> d (fun x -> { x with Equipment = updateAt i (fun it -> { it with Description = v }) x.Equipment })) ]
+                  itemCard
+                      [ cardBox "Name" e.Name (fun v -> d (fun x -> { x with Equipment = updateAt i (fun it -> { it with Name = v }) x.Equipment }))
+                        cardBox "Type" e.ItemType (fun v -> d (fun x -> { x with Equipment = updateAt i (fun it -> { it with ItemType = v }) x.Equipment }))
+                        cardBox "Description" e.Description (fun v -> d (fun x -> { x with Equipment = updateAt i (fun it -> { it with Description = v }) x.Equipment })) ]
                       (fun () -> d (fun x -> { x with Equipment = removeAt i x.Equipment })) ]
             (fun () -> d (fun x -> { x with Equipment = x.Equipment @ [ Items.emptyEquipment ] }))
 
@@ -723,8 +763,8 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
             "Languages"
             "+ Language"
             [ for i, l in List.indexed c.Languages ->
-                  itemRow
-                      [ inlineBox "Language" l (fun v -> d (fun x -> { x with Languages = updateAt i (fun _ -> v) x.Languages })) ]
+                  itemCard
+                      [ cardBox "Language" l (fun v -> d (fun x -> { x with Languages = updateAt i (fun _ -> v) x.Languages })) ]
                       (fun () -> d (fun x -> { x with Languages = removeAt i x.Languages })) ]
             (fun () -> d (fun x -> { x with Languages = x.Languages @ [ "" ] }))
 
@@ -733,16 +773,20 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
             "Micro-stats"
             "+ Micro-stat"
             [ for i, ms in List.indexed c.MicroStats ->
-                  itemRow
-                      [ inlineBox "Name" ms.Name (fun v -> d (fun x -> { x with MicroStats = updateAt i (fun it -> { it with Name = v }) x.MicroStats }))
-                        Html.input
-                            [ prop.className "ll-input ll-inline ll-inline--num"
-                              prop.type' "number"
-                              prop.value ms.Value
-                              prop.onChange (fun (v: string) ->
-                                  match System.Int32.TryParse v with
-                                  | true, n -> d (fun x -> { x with MicroStats = updateAt i (fun it -> { it with Value = n }) x.MicroStats })
-                                  | _ -> ()) ] ]
+                  itemCard
+                      [ cardBox "Name" ms.Name (fun v -> d (fun x -> { x with MicroStats = updateAt i (fun it -> { it with Name = v }) x.MicroStats }))
+                        Html.label
+                            [ prop.className "ll-cardfield"
+                              prop.children
+                                  [ Html.span [ prop.className "ll-cardfield__label"; prop.text "Value" ]
+                                    Html.input
+                                        [ prop.className "ll-input ll-input--sm"
+                                          prop.type' "number"
+                                          prop.value ms.Value
+                                          prop.onChange (fun (v: string) ->
+                                              match System.Int32.TryParse v with
+                                              | true, n -> d (fun x -> { x with MicroStats = updateAt i (fun it -> { it with Value = n }) x.MicroStats })
+                                              | _ -> ()) ] ] ] ]
                       (fun () -> d (fun x -> { x with MicroStats = removeAt i x.MicroStats })) ]
             (fun () -> d (fun x -> { x with MicroStats = x.MicroStats @ [ Items.emptyMicroStat ] }))
 
@@ -772,6 +816,7 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
                 vitals
                 primaryStats
                 secondaryStats
+                minorStats
                 weapons
                 spells
                 skills
