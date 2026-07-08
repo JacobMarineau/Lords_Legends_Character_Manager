@@ -142,11 +142,13 @@ type MicroStat = { Name: string; Value: int }
 
 [<RequireQualifiedAccess>]
 module Items =
-    let emptyWeapon = { Name = ""; DamageDie = ""; Description = "" }
-    let emptySpell = { Name = ""; DamageDie = ""; Cost = ""; ActionType = ""; Description = "" }
-    let emptySkill = { Name = ""; DamageDie = ""; ActionType = ""; Cost = ""; Description = "" }
-    let emptyEquipment = { Name = ""; ItemType = ""; Description = "" }
-    let emptyMicroStat = { Name = ""; Value = 0 }
+    // Spell and Skill share identical field names, so these literals must be
+    // annotated or F# infers the last-declared type (Skill) for both.
+    let emptyWeapon: Weapon = { Name = ""; DamageDie = ""; Description = "" }
+    let emptySpell: Spell = { Name = ""; DamageDie = ""; Cost = ""; ActionType = ""; Description = "" }
+    let emptySkill: Skill = { Name = ""; DamageDie = ""; ActionType = ""; Cost = ""; Description = "" }
+    let emptyEquipment: EquipmentItem = { Name = ""; ItemType = ""; Description = "" }
+    let emptyMicroStat: MicroStat = { Name = ""; Value = 0 }
 
 // ---------------------------------------------------------------------------
 // The character aggregate. The 9 ruleset stats are structured records; every
