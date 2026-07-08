@@ -194,136 +194,191 @@ let private raceName (content: Content option) (raceId: string) =
     |> Option.map (fun r -> r.Name)
     |> Option.defaultValue raceId
 
-let private statBadge (label: string) (value: int) (modifier: string) =
+let private vocationName (content: Content option) (vocId: string) =
+    content
+    |> Option.bind (fun c -> c.Vocations |> List.tryFind (fun v -> v.Id = vocId))
+    |> Option.map (fun v -> v.Name)
+    |> Option.defaultValue vocId
+
+/// One color-coded stat tile. `variant` is a CSS modifier like "ll-stat--might"
+/// (empty for the neutral derived-stat tiles).
+let private statTile (variant: string) (label: string) (value: string) (sub: string) =
     Html.div
-        [ prop.className "col text-center border rounded p-2 m-1"
+        [ prop.className (if variant = "" then "ll-stat" else "ll-stat " + variant)
           prop.children
-              [ Html.div [ prop.className "small text-muted"; prop.text label ]
-                Html.div [ prop.className "fs-5 fw-bold"; prop.text (string value) ]
-                Html.div [ prop.className "small text-primary"; prop.text modifier ] ] ]
+              [ Html.div [ prop.className "ll-stat__label"; prop.text label ]
+                Html.div [ prop.className "ll-stat__value"; prop.text value ]
+                Html.div [ prop.className "ll-stat__mod"; prop.text sub ] ] ]
 
 let private characterCard (content: Content option) (dispatch: Msg -> unit) (c: Character) =
     Html.div
-        [ prop.className "card mb-3 shadow-sm"
+        [ prop.className "ll-card"
           prop.children
               [ Html.div
-                    [ prop.className "card-body"
+                    [ prop.className "ll-card__head"
                       prop.children
                           [ Html.div
-                                [ prop.className "d-flex justify-content-between align-items-start"
-                                  prop.children
-                                      [ Html.div
-                                            [ prop.children
-                                                  [ Html.h5 [ prop.className "card-title mb-0"; prop.text c.Name ]
-                                                    Html.small
-                                                        [ prop.className "text-muted"
-                                                          prop.text (sprintf "%s · %s" (raceName content c.RaceId) c.VocationId) ] ] ]
-                                        Html.button
-                                            [ prop.className "btn btn-sm btn-outline-danger"
-                                              prop.text "Delete"
-                                              prop.onClick (fun _ -> dispatch (Delete c.Id)) ] ] ]
-                            Html.div
-                                [ prop.className "row text-center my-3"
-                                  prop.children
-                                      [ statBadge "HP" c.CurrentHp (sprintf "/ %d" c.MaxHp)
-                                        statBadge "Mass" c.Mass ""
-                                        statBadge "Speed" c.SpeedClass "SC"
-                                        statBadge "Soul" c.SoulTier "ST"
-                                        statBadge "Inj." c.Injuries (sprintf "/ %d" c.MaxInjuries)
-                                        statBadge "Ext. WP" c.ExtendedWillpower "" ] ]
-                            Html.div
-                                [ prop.className "row"
-                                  prop.children
-                                      [ for stat in PrimaryStat.all do
-                                            let v = c.Primary.Value stat
-                                            statBadge (PrimaryStat.name stat) v (fmtMod (Mechanics.primaryModifier v)) ] ]
-                            Html.div
-                                [ prop.className "row mt-1"
-                                  prop.children
-                                      [ for stat in SecondaryStat.all do
-                                            let v = c.Secondary.Value stat
-                                            let m =
-                                                match Mechanics.secondaryModifier stat v with
-                                                | Some n -> fmtMod n
-                                                | None -> "—"
-                                            statBadge (SecondaryStat.name stat) v m ] ] ] ] ] ]
+                                [ prop.children
+                                      [ Html.h3 [ prop.className "ll-card__title"; prop.text c.Name ]
+                                        Html.div
+                                            [ prop.className "ll-card__sub"
+                                              prop.text (sprintf "%s · %s" (raceName content c.RaceId) (vocationName content c.VocationId)) ] ] ]
+                            Html.button
+                                [ prop.className "ll-btn ll-btn--danger ll-btn--sm"
+                                  prop.text "Delete"
+                                  prop.onClick (fun _ -> dispatch (Delete c.Id)) ] ] ]
+                // Derived stats
+                Html.div
+                    [ prop.className "ll-stats"
+                      prop.children
+                          [ statTile "" "HP" (string c.CurrentHp) (sprintf "/ %d" c.MaxHp)
+                            statTile "" "Mass" (string c.Mass) ""
+                            statTile "" "Speed" (string c.SpeedClass) "SC"
+                            statTile "" "Soul" (string c.SoulTier) "ST"
+                            statTile "" "Injuries" (string c.Injuries) (sprintf "/ %d" c.MaxInjuries)
+                            statTile "" "Ext. WP" (string c.ExtendedWillpower) "" ] ]
+                // Primary stats (modifiers from the shared Mechanics)
+                Html.div [ prop.className "ll-section-label"; prop.text "Primary Stats" ]
+                Html.div
+                    [ prop.className "ll-stats"
+                      prop.children
+                          [ for stat in PrimaryStat.all do
+                                let v = c.Primary.Value stat
+                                let variant = "ll-stat--" + (PrimaryStat.name stat).ToLower()
+                                statTile variant (PrimaryStat.name stat) (string v) (fmtMod (Mechanics.primaryModifier v)) ] ]
+                // Secondary stats
+                Html.div [ prop.className "ll-section-label"; prop.text "Secondary Stats" ]
+                Html.div
+                    [ prop.className "ll-stats"
+                      prop.children
+                          [ for stat in SecondaryStat.all do
+                                let v = c.Secondary.Value stat
+                                let variant = "ll-stat--" + (SecondaryStat.name stat).ToLower()
+
+                                let sub =
+                                    match Mechanics.secondaryModifier stat v with
+                                    | Some n -> fmtMod n
+                                    | None -> "—"
+
+                                statTile variant (SecondaryStat.name stat) (string v) sub ] ] ] ]
 
 let private selectField (label: string) (value: string) (options: (string * string) list) (onChange: string -> unit) =
     Html.div
-        [ prop.className "mb-3"
+        [ prop.className "ll-field"
           prop.children
-              [ Html.label [ prop.className "form-label"; prop.text label ]
+              [ Html.label [ prop.className "ll-label"; prop.text label ]
                 Html.select
-                    [ prop.className "form-select"
+                    [ prop.className "ll-select"
                       prop.value value
                       prop.onChange onChange
                       prop.children [ for (v, t) in options -> Html.option [ prop.value v; prop.text t ] ] ] ] ]
 
 // ---------------------------------------------------------------------------
+// Chrome: nav + footer
+// ---------------------------------------------------------------------------
+
+let private navbar (user: User) (page: Page) (dispatch: Msg -> unit) =
+    let subCls active =
+        if active then "ll-subnav__link is-active" else "ll-subnav__link"
+
+    Html.div
+        [ prop.children
+              [ Html.div
+                    [ prop.className "ll-nav"
+                      prop.children
+                          [ Html.img [ prop.className "ll-nav__logo"; prop.src "/nav-logo.ico"; prop.alt "Lords & Legends" ]
+                            Html.span [ prop.className "ll-nav__brand"; prop.text "Lords & Legends" ]
+                            Html.span [ prop.className "ll-nav__user"; prop.text (sprintf "Signed in as %s" user.Username) ]
+                            Html.button
+                                [ prop.className "ll-nav__link"
+                                  prop.text "Log out"
+                                  prop.onClick (fun _ -> dispatch Logout) ] ] ]
+                Html.div
+                    [ prop.className "ll-subnav"
+                      prop.children
+                          [ Html.button
+                                [ prop.className (subCls (page = CreateForm))
+                                  prop.text "Character Creator"
+                                  prop.onClick (fun _ -> dispatch (GoTo CreateForm)) ]
+                            Html.button
+                                [ prop.className (subCls (page = CharacterList))
+                                  prop.text "Characters"
+                                  prop.onClick (fun _ -> dispatch (GoTo CharacterList)) ] ] ] ] ]
+
+let private footer =
+    Html.footer
+        [ prop.className "ll-footer"
+          prop.text (sprintf "© %d Lords and Legends" (System.DateTime.Now.Year)) ]
+
+// ---------------------------------------------------------------------------
 // Pages
 // ---------------------------------------------------------------------------
 
-let private authPage (model: Model) (dispatch: Msg -> unit) =
+let private authView (model: Model) (dispatch: Msg -> unit) =
     let isRegister = model.AuthMode = RegisterMode
 
     Html.div
-        [ prop.className "card shadow-sm mx-auto mt-5"
-          prop.style [ style.maxWidth 380 ]
-          prop.children
-              [ Html.div
-                    [ prop.className "card-body p-4"
-                      prop.children
-                          [ Html.h4
-                                [ prop.className "card-title text-center mb-4"
-                                  prop.text (if isRegister then "Create an Account" else "Sign In") ]
-                            Html.div
-                                [ prop.className "mb-3"
-                                  prop.children
-                                      [ Html.label [ prop.className "form-label"; prop.text "Username" ]
-                                        Html.input
-                                            [ prop.className "form-control"
-                                              prop.value model.Username
-                                              prop.onChange (SetUsername >> dispatch) ] ] ]
-                            Html.div
-                                [ prop.className "mb-3"
-                                  prop.children
-                                      [ Html.label [ prop.className "form-label"; prop.text "Password" ]
-                                        Html.input
-                                            [ prop.className "form-control"
-                                              prop.type' "password"
-                                              prop.value model.Password
-                                              prop.onChange (SetPassword >> dispatch) ] ] ]
-                            match model.AuthError with
-                            | Some e -> Html.div [ prop.className "alert alert-danger py-2"; prop.text e ]
-                            | None -> Html.none
-                            Html.button
-                                [ prop.className "btn btn-primary w-100"
-                                  prop.disabled (model.Loading || model.Username.Trim() = "" || model.Password = "")
-                                  prop.text (if isRegister then "Register" else "Sign In")
-                                  prop.onClick (fun _ -> dispatch SubmitAuth) ]
-                            Html.div
-                                [ prop.className "text-center mt-3"
-                                  prop.children
-                                      [ Html.button
-                                            [ prop.className "btn btn-link btn-sm"
-                                              prop.text (if isRegister then "Have an account? Sign in" else "New here? Create an account")
-                                              prop.onClick (fun _ ->
-                                                  dispatch (SetAuthMode(if isRegister then LoginMode else RegisterMode))) ] ] ] ] ] ] ]
+        [ Html.div
+              [ prop.className "ll-hero"
+                prop.children
+                    [ Html.img [ prop.className "ll-hero__logo"; prop.src "/nav-logo.ico"; prop.alt "Lords & Legends" ]
+                      Html.h1 [ prop.className "ll-hero__title"; prop.text "Lords & Legends" ]
+                      Html.p [ prop.className "ll-hero__tagline"; prop.text "Forge your legend. Manage your characters." ] ] ]
+          Html.div
+              [ prop.className "ll-panel ll-panel--narrow"
+                prop.children
+                    [ Html.h2 [ prop.className "ll-auth-title"; prop.text (if isRegister then "Create an Account" else "Sign In") ]
+                      Html.div
+                          [ prop.className "ll-field"
+                            prop.children
+                                [ Html.label [ prop.className "ll-label"; prop.text "Username" ]
+                                  Html.input
+                                      [ prop.className "ll-input"
+                                        prop.value model.Username
+                                        prop.onChange (SetUsername >> dispatch) ] ] ]
+                      Html.div
+                          [ prop.className "ll-field"
+                            prop.children
+                                [ Html.label [ prop.className "ll-label"; prop.text "Password" ]
+                                  Html.input
+                                      [ prop.className "ll-input"
+                                        prop.type' "password"
+                                        prop.value model.Password
+                                        prop.onChange (SetPassword >> dispatch) ] ] ]
+                      (match model.AuthError with
+                       | Some e -> Html.div [ prop.className "ll-alert ll-alert--error"; prop.text e ]
+                       | None -> Html.none)
+                      Html.button
+                          [ prop.className "ll-btn ll-btn--accent"
+                            prop.style [ style.width (length.percent 100) ]
+                            prop.disabled (model.Loading || model.Username.Trim() = "" || model.Password = "")
+                            prop.text (if isRegister then "Register" else "Sign In")
+                            prop.onClick (fun _ -> dispatch SubmitAuth) ]
+                      Html.div
+                          [ prop.style [ style.textAlign.center; style.marginTop 14 ]
+                            prop.children
+                                [ Html.button
+                                      [ prop.className "ll-link-btn"
+                                        prop.text (if isRegister then "Have an account? Sign in" else "New here? Create an account")
+                                        prop.onClick (fun _ ->
+                                            dispatch (SetAuthMode(if isRegister then LoginMode else RegisterMode))) ] ] ] ] ] ]
 
 let private listPage (model: Model) (dispatch: Msg -> unit) =
     Html.div
-        [ Html.div
-              [ prop.className "d-flex justify-content-between align-items-center mb-4"
-                prop.children
-                    [ Html.h2 [ prop.text "Your Characters" ]
-                      Html.button
-                          [ prop.className "btn btn-primary"
-                            prop.text "+ New Character"
-                            prop.onClick (fun _ -> dispatch (GoTo CreateForm)) ] ] ]
-          if List.isEmpty model.Characters then
-              Html.p [ prop.className "text-muted"; prop.text "No characters yet. Create your first adventurer." ]
-          else
-              Html.div [ prop.children [ for c in model.Characters -> characterCard model.Content dispatch c ] ] ]
+        [ prop.className "ll-panel"
+          prop.children
+              [ Html.div
+                    [ prop.style [ style.display.flex; style.justifyContent.spaceBetween; style.alignItems.center; style.marginBottom 20 ]
+                      prop.children
+                          [ Html.h1 [ prop.className "ll-page-title"; prop.style [ style.marginBottom 0 ]; prop.text "Your Characters" ]
+                            Html.button
+                                [ prop.className "ll-btn ll-btn--accent"
+                                  prop.text "+ New Character"
+                                  prop.onClick (fun _ -> dispatch (GoTo CreateForm)) ] ] ]
+                if List.isEmpty model.Characters then
+                    Html.p [ prop.className "ll-muted"; prop.text "No characters yet. Create your first adventurer." ]
+                else
+                    Html.div [ prop.children [ for c in model.Characters -> characterCard model.Content dispatch c ] ] ] ]
 
 let private createPage (model: Model) (dispatch: Msg -> unit) =
     let races = model.Content |> Option.map (fun c -> c.Races) |> Option.defaultValue []
@@ -332,16 +387,15 @@ let private createPage (model: Model) (dispatch: Msg -> unit) =
     let sec = StatGeneration.secondaryArray model.Array
 
     Html.div
-        [ prop.style [ style.maxWidth 640 ]
-          prop.className "mx-auto"
+        [ prop.className "ll-panel ll-panel--narrow"
           prop.children
-              [ Html.h2 [ prop.className "mb-4"; prop.text "Create a Character" ]
+              [ Html.h1 [ prop.className "ll-page-title"; prop.text "Create a Character" ]
                 Html.div
-                    [ prop.className "mb-3"
+                    [ prop.className "ll-field"
                       prop.children
-                          [ Html.label [ prop.className "form-label"; prop.text "Name" ]
+                          [ Html.label [ prop.className "ll-label"; prop.text "Name" ]
                             Html.input
-                                [ prop.className "form-control"
+                                [ prop.className "ll-input"
                                   prop.value model.Name
                                   prop.onChange (SetName >> dispatch) ] ] ]
                 selectField "Race" model.RaceId [ for r in races -> r.Id, r.Name ] (SetRace >> dispatch)
@@ -354,78 +408,68 @@ let private createPage (model: Model) (dispatch: Msg -> unit) =
                     [ "normal", "Normal Person"; "adventurer", "Adventurer" ]
                     (fun v -> dispatch (SetArray(if v = "adventurer" then Adventurer else NormalPerson)))
                 Html.div
-                    [ prop.className "alert alert-secondary small"
+                    [ prop.className "ll-alert ll-alert--info"
                       prop.children
                           [ Html.strong [ prop.text "Primary: " ]
                             Html.span [ prop.text (prim |> List.map string |> String.concat ", ") ]
                             Html.br []
-                            Html.strong [ prop.text "Secondary (WP/Fer/Arc): " ]
+                            Html.strong [ prop.text "Secondary (WP / Fer / Arc): " ]
                             Html.span [ prop.text (sec |> List.map string |> String.concat ", ") ] ] ]
                 Html.div
-                    [ prop.className "mb-3"
+                    [ prop.className "ll-field"
                       prop.children
-                          [ Html.label [ prop.className "form-label"; prop.text "HP Roll (2d8)" ]
+                          [ Html.label [ prop.className "ll-label"; prop.text "HP Roll (2d8)" ]
                             Html.input
-                                [ prop.className "form-control"
+                                [ prop.className "ll-input"
                                   prop.type' "number"
                                   prop.value model.HpRoll
                                   prop.onChange (fun (v: string) ->
                                       match System.Int32.TryParse v with
                                       | true, n -> dispatch (SetHpRoll n)
                                       | _ -> ()) ] ] ]
-                match model.Error with
-                | Some e -> Html.div [ prop.className "alert alert-danger"; prop.text e ]
-                | None -> Html.none
+                (match model.Error with
+                 | Some e -> Html.div [ prop.className "ll-alert ll-alert--error"; prop.text e ]
+                 | None -> Html.none)
                 Html.div
-                    [ prop.className "d-flex gap-2"
+                    [ prop.className "ll-btn-row"
                       prop.children
                           [ Html.button
-                                [ prop.className "btn btn-primary"
+                                [ prop.className "ll-btn ll-btn--accent"
                                   prop.disabled (model.Loading || model.Name.Trim() = "")
                                   prop.text "Create"
                                   prop.onClick (fun _ -> dispatch Submit) ]
                             Html.button
-                                [ prop.className "btn btn-outline-secondary"
+                                [ prop.className "ll-btn ll-btn--ghost"
                                   prop.text "Cancel"
                                   prop.onClick (fun _ -> dispatch (GoTo CharacterList)) ] ] ] ] ]
 
-let private navbar (user: User) (dispatch: Msg -> unit) =
-    Html.div
-        [ prop.className "d-flex justify-content-between align-items-center mb-2"
-          prop.children
-              [ Html.div
-                    [ prop.children
-                          [ Html.h1 [ prop.className "mb-0"; prop.text "Lords & Legends" ]
-                            Html.span [ prop.className "text-muted"; prop.text "Character Manager" ] ] ]
-                Html.div
-                    [ prop.className "text-end"
-                      prop.children
-                          [ Html.div [ prop.className "small text-muted"; prop.text (sprintf "Signed in as %s" user.Username) ]
-                            Html.button
-                                [ prop.className "btn btn-sm btn-outline-secondary mt-1"
-                                  prop.text "Log out"
-                                  prop.onClick (fun _ -> dispatch Logout) ] ] ] ] ]
+// ---------------------------------------------------------------------------
+// Root view
+// ---------------------------------------------------------------------------
 
 let view (model: Model) (dispatch: Msg -> unit) =
     Html.div
-        [ prop.className "container py-4"
+        [ prop.className "ll-app"
           prop.children
-              [ if model.CheckingAuth then
-                    Html.div [ prop.className "text-center py-5"; prop.text "Loading…" ]
-                else
-                    match model.CurrentUser with
-                    | None ->
-                        Html.div
-                            [ Html.h1 [ prop.className "text-center mb-1"; prop.text "Lords & Legends" ]
-                              Html.p [ prop.className "text-center text-muted"; prop.text "Character Manager" ]
-                              authPage model dispatch ]
-                    | Some user ->
-                        Html.div
-                            [ navbar user dispatch
-                              Html.hr []
-                              match model.Page with
-                              | CharacterList -> listPage model dispatch
-                              | CreateForm -> createPage model dispatch ] ] ]
+              [ (match model.CurrentUser with
+                 | Some user -> navbar user model.Page dispatch
+                 | None -> Html.none)
+                Html.div
+                    [ prop.className "ll-main"
+                      prop.children
+                          [ if model.CheckingAuth then
+                                Html.div
+                                    [ prop.className "ll-panel ll-panel--narrow"
+                                      prop.style [ style.textAlign.center ]
+                                      prop.text "Loading…" ]
+                            else
+                                match model.CurrentUser with
+                                | None -> authView model dispatch
+                                | Some _ ->
+                                    match model.Page with
+                                    | CharacterList -> listPage model dispatch
+                                    | CreateForm -> createPage model dispatch ] ]
+                footer ] ]
 
 // ---------------------------------------------------------------------------
 // Program

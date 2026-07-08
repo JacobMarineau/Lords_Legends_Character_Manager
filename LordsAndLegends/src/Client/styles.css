@@ -1,0 +1,378 @@
+/* Lords & Legends theme — matches the original site's look & feel:
+   earthy taupe/brown palette, gold accent, Merriweather + Open Sans,
+   a fantasy-forest background, panels floating on top, color-coded stats. */
+
+@import url("https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Open+Sans:wght@400;600;700&display=swap");
+
+:root {
+  --off-white: #dacfcc;
+  --off-white-2: #d8dacc;
+  --base: #8e7b72;
+  --base-2: #ae8876;
+  --heading-footer: #5e584b;
+  --trim: #5e584b;
+  --accent: #be9a61;
+  --contrast: #926a6a;
+  --box-shadow: #393631;
+  --text-dark: #1c1c1c;
+  --text-light: #fafafa;
+
+  /* Stat group colors (from the original theme) */
+  --stat-might: #ff8c42;
+  --stat-agility: #4cd964;
+  --stat-vitality: #ffdd33;
+  --stat-intelligence: #c084ff;
+  --stat-cunning: #be9a61;
+  --stat-presence: #4a90e2;
+  --stat-willpower: #ff5c5c;
+  --stat-ferocity: #d9534f;
+  --stat-arcana: #33cccc;
+
+  --font-body: "Open Sans", sans-serif;
+  --font-heading: "Merriweather", serif;
+  --drop-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-body);
+  color: var(--text-dark);
+  background: url("/forest-bg.jpg") center / cover no-repeat fixed;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-heading);
+  color: var(--heading-footer);
+  text-shadow: var(--drop-shadow);
+}
+
+/* Sticky-footer app shell */
+.ll-app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.ll-main {
+  flex: 1;
+}
+
+/* ---- Primary nav ---- */
+.ll-nav {
+  background: var(--base);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 10px var(--box-shadow);
+  position: relative;
+  z-index: 10;
+}
+.ll-nav__logo {
+  height: 40px;
+  margin-right: 16px;
+  filter: drop-shadow(2px 2px 5px rgba(0, 0, 0, 0.5));
+}
+.ll-nav__brand {
+  font-family: var(--font-heading);
+  color: var(--off-white-2);
+  font-size: 24px;
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+  margin: 0 auto 0 0;
+}
+.ll-nav__user {
+  color: var(--off-white-2);
+  font-size: 14px;
+  margin-right: 12px;
+}
+.ll-nav__link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--off-white-2);
+  font-family: var(--font-heading);
+  font-size: 18px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-decoration: none;
+}
+.ll-nav__link:hover {
+  color: var(--accent);
+}
+
+/* ---- Secondary nav ---- */
+.ll-subnav {
+  background: var(--base-2);
+  padding: 8px 16px;
+  display: flex;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.ll-subnav__link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--off-white);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 16px;
+}
+.ll-subnav__link:hover,
+.ll-subnav__link.is-active {
+  color: var(--trim);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ---- Footer ---- */
+.ll-footer {
+  background: var(--base-2);
+  color: var(--off-white);
+  text-align: center;
+  padding: 16px 0;
+  font-size: 12px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* ---- Content panel floating over the background ---- */
+.ll-panel {
+  background: var(--off-white);
+  border-radius: 12px;
+  max-width: 1100px;
+  margin: 24px auto;
+  padding: 24px 28px;
+  box-shadow: 0 6px 20px var(--box-shadow);
+}
+.ll-panel--narrow {
+  max-width: 460px;
+}
+.ll-page-title {
+  font-size: 40px;
+  text-align: center;
+  margin: 0 0 24px;
+}
+
+/* ---- Character card ---- */
+.ll-card {
+  background: var(--base-2);
+  color: var(--off-white);
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 3px 6px var(--box-shadow);
+  margin-bottom: 24px;
+  transition: transform 0.25s ease;
+}
+.ll-card:hover {
+  transform: translateY(-5px);
+}
+.ll-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+.ll-card__title {
+  font-family: var(--font-heading);
+  color: var(--text-light);
+  margin: 0;
+  font-size: 22px;
+}
+.ll-card__sub {
+  color: var(--off-white);
+  opacity: 0.9;
+  font-size: 14px;
+}
+
+/* ---- Buttons ---- */
+.ll-btn {
+  display: inline-block;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--text-light);
+  text-shadow: var(--drop-shadow);
+  background: var(--contrast);
+}
+.ll-btn:hover {
+  background: var(--trim);
+}
+.ll-btn--accent {
+  background: var(--accent);
+  color: var(--text-dark);
+  text-shadow: none;
+}
+.ll-btn--accent:hover {
+  background: var(--trim);
+  color: var(--text-light);
+}
+.ll-btn--danger {
+  background: var(--stat-ferocity);
+}
+.ll-btn--danger:hover {
+  background: var(--trim);
+}
+.ll-btn--ghost {
+  background: transparent;
+  color: var(--heading-footer);
+  border: 1px solid var(--base);
+  text-shadow: none;
+}
+.ll-btn--ghost:hover {
+  background: var(--base);
+  color: var(--text-light);
+}
+.ll-btn--sm {
+  padding: 5px 10px;
+  font-size: 13px;
+}
+.ll-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ll-btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+/* ---- Stat grid + badges ---- */
+.ll-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.ll-stat {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 8px;
+  padding: 8px 6px;
+  text-align: center;
+  border-top: 4px solid var(--base);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+.ll-stat__label {
+  font-size: 11px;
+  color: var(--heading-footer);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.ll-stat__value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-dark);
+  font-family: var(--font-heading);
+  line-height: 1.2;
+}
+.ll-stat__mod {
+  font-size: 13px;
+  color: var(--contrast);
+  font-weight: 700;
+}
+.ll-stat--might { border-top-color: var(--stat-might); }
+.ll-stat--agility { border-top-color: var(--stat-agility); }
+.ll-stat--vitality { border-top-color: var(--stat-vitality); }
+.ll-stat--intelligence { border-top-color: var(--stat-intelligence); }
+.ll-stat--cunning { border-top-color: var(--stat-cunning); }
+.ll-stat--presence { border-top-color: var(--stat-presence); }
+.ll-stat--willpower { border-top-color: var(--stat-willpower); }
+.ll-stat--ferocity { border-top-color: var(--stat-ferocity); }
+.ll-stat--arcana { border-top-color: var(--stat-arcana); }
+
+.ll-section-label {
+  font-family: var(--font-heading);
+  color: var(--text-light);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 14px 0 4px;
+  opacity: 0.9;
+}
+
+/* ---- Forms ---- */
+.ll-field {
+  margin-bottom: 16px;
+}
+.ll-label {
+  display: block;
+  font-weight: 600;
+  color: var(--heading-footer);
+  margin-bottom: 4px;
+}
+.ll-input,
+.ll-select {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 6px;
+  border: 1px solid var(--base);
+  font-family: var(--font-body);
+  font-size: 15px;
+  background: #fff;
+  color: var(--text-dark);
+}
+.ll-input:focus,
+.ll-select:focus {
+  outline: 2px solid var(--accent);
+  border-color: var(--accent);
+}
+
+.ll-alert {
+  padding: 12px 14px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+.ll-alert--error {
+  background: #f7e0e0;
+  color: #9c2b2b;
+  border: 1px solid var(--stat-ferocity);
+}
+.ll-alert--info {
+  background: var(--off-white-2);
+  color: var(--trim);
+  border: 1px solid var(--base);
+}
+
+.ll-muted {
+  color: var(--heading-footer);
+  opacity: 0.85;
+}
+.ll-link-btn {
+  background: none;
+  border: none;
+  color: var(--contrast);
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 14px;
+}
+.ll-link-btn:hover {
+  color: var(--trim);
+}
+
+/* ---- Auth / hero ---- */
+.ll-hero {
+  text-align: center;
+  padding: 40px 16px 8px;
+}
+.ll-hero__logo {
+  height: 72px;
+  filter: drop-shadow(2px 2px 6px rgba(0, 0, 0, 0.6));
+}
+.ll-hero__title {
+  font-size: 44px;
+  color: var(--text-light);
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
+  margin: 12px 0 2px;
+}
+.ll-hero__tagline {
+  color: var(--off-white);
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+  font-size: 18px;
+}
+.ll-auth-title {
+  text-align: center;
+  margin: 0 0 20px;
+}
