@@ -16,6 +16,37 @@ let private removeAt i xs =
     xs |> List.mapi (fun idx x -> idx, x) |> List.choose (fun (idx, x) -> if idx = i then None else Some x)
 
 // ---------------------------------------------------------------------------
+// Theme switcher (three palettes, cycled by a button, persisted in localStorage)
+// ---------------------------------------------------------------------------
+
+let private themes = [ "vanguard"; "wildwood"; "tidewater" ]
+
+let private themeLabel =
+    function
+    | "wildwood" -> "Wildwood"
+    | "tidewater" -> "Tidewater"
+    | _ -> "Vanguard"
+
+let private loadTheme () =
+    try
+        match Browser.Dom.window.localStorage.getItem "ll-theme" with
+        | null
+        | "" -> "vanguard"
+        | t -> t
+    with _ ->
+        "vanguard"
+
+let private saveTheme (t: string) =
+    try
+        Browser.Dom.window.localStorage.setItem ("ll-theme", t)
+    with _ ->
+        ()
+
+let private nextTheme (t: string) =
+    let i = themes |> List.tryFindIndex ((=) t) |> Option.defaultValue 0
+    themes.[(i + 1) % themes.Length]
+
+// ---------------------------------------------------------------------------
 // Model
 // ---------------------------------------------------------------------------
 
@@ -55,7 +86,9 @@ type Model =
       // Sheet editing
       Draft: Character option
       Saving: bool
-      SaveMsg: string option }
+      SaveMsg: string option
+      // Cosmetic
+      Theme: string }
 
 type Msg =
     // Auth
@@ -91,6 +124,8 @@ type Msg =
     | Saved of Character
     | Delete of int
     | Deleted of int
+    // Cosmetic
+    | CycleTheme
 
 // ---------------------------------------------------------------------------
 // Init / update
@@ -130,7 +165,8 @@ let init () =
           HpRoll = 9
           Draft = None
           Saving = false
-          SaveMsg = None }
+          SaveMsg = None
+          Theme = loadTheme () }
 
     model, Cmd.OfAsync.either Api.authApi.getCurrentUser () GotCurrentUser Failed
 
@@ -248,6 +284,10 @@ let update (msg: Msg) (model: Model) =
             Page = (if model.Page = Sheet then CharacterList else model.Page)
             Draft = None },
         Cmd.none
+    | CycleTheme ->
+        let t = nextTheme model.Theme
+        saveTheme t
+        { model with Theme = t }, Cmd.none
 
 // ---------------------------------------------------------------------------
 // View helpers
@@ -831,8 +871,14 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
 let view (model: Model) (dispatch: Msg -> unit) =
     Html.div
         [ prop.className "ll-app"
+          prop.custom ("data-theme", model.Theme)
           prop.children
-              [ (match model.CurrentUser with
+              [ Html.button
+                    [ prop.className "ll-theme-toggle"
+                      prop.title "Switch color palette"
+                      prop.text (sprintf "🎨 %s" (themeLabel model.Theme))
+                      prop.onClick (fun _ -> dispatch CycleTheme) ]
+                (match model.CurrentUser with
                  | Some user -> navbar user model.Page dispatch
                  | None -> Html.none)
                 Html.div

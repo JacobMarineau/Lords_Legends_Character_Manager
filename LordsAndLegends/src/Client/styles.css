@@ -5,24 +5,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Open+Sans:wght@400;600;700&display=swap");
 
 :root {
-  --off-white: #dacfcc;
-  --off-white-2: #d8dacc;
-  --base: #8e7b72;
-  --base-2: #ae8876;
-  --heading-footer: #5e584b;
-  --trim: #5e584b;
-  --accent: #be9a61;
-  --contrast: #926a6a;
-  --box-shadow: #393631;
-  --text-dark: #1c1c1c;
-  --text-light: #fafafa;
-
-  /* Stat group colors (from the original theme) */
+  /* Shared across every theme */
   --stat-might: #ff8c42;
   --stat-agility: #4cd964;
   --stat-vitality: #ffdd33;
   --stat-intelligence: #c084ff;
-  --stat-cunning: #be9a61;
+  --stat-cunning: #d0a24a;
   --stat-presence: #4a90e2;
   --stat-willpower: #ff5c5c;
   --stat-ferocity: #d9534f;
@@ -31,6 +19,77 @@
   --font-body: "Open Sans", sans-serif;
   --font-heading: "Merriweather", serif;
   --drop-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+
+  /* Fallback chrome (Vanguard) so vars resolve before the theme attaches */
+  --bg: linear-gradient(160deg, #2b2d42, #3a3d5c);
+  --off-white: #edf2f4;
+  --off-white-2: #dfe6ea;
+  --base: #2b2d42;
+  --base-2: #8d99ae;
+  --card: #ffffff;
+  --heading-footer: #2b2d42;
+  --trim: #2b2d42;
+  --accent: #ef233c;
+  --accent-text: #ffffff;
+  --contrast: #8d99ae;
+  --box-shadow: rgba(43, 45, 66, 0.35);
+  --text-dark: #2b2d42;
+  --text-light: #edf2f4;
+}
+
+/* ============================ THEMES ============================ */
+/* Vanguard — space indigo / lavender / platinum / punch red */
+.ll-app[data-theme="vanguard"] {
+  --bg: linear-gradient(160deg, #2b2d42, #3a3d5c);
+  --off-white: #edf2f4;
+  --off-white-2: #dfe6ea;
+  --base: #2b2d42;
+  --base-2: #8d99ae;
+  --card: #ffffff;
+  --heading-footer: #2b2d42;
+  --trim: #2b2d42;
+  --accent: #ef233c;
+  --accent-text: #ffffff;
+  --contrast: #8d99ae;
+  --box-shadow: rgba(43, 45, 66, 0.35);
+  --text-dark: #2b2d42;
+  --text-light: #edf2f4;
+}
+
+/* Wildwood — vintage grape / olive / palm leaf / lime moss */
+.ll-app[data-theme="wildwood"] {
+  --bg: linear-gradient(160deg, #45425a, #575c55);
+  --off-white: #eef0e4;
+  --off-white-2: #e2e6d2;
+  --base: #45425a;
+  --base-2: #6c7d47;
+  --card: #ffffff;
+  --heading-footer: #45425a;
+  --trim: #575c55;
+  --accent: #acc12f;
+  --accent-text: #2b2b1a;
+  --contrast: #6c7d47;
+  --box-shadow: rgba(69, 66, 90, 0.35);
+  --text-dark: #3a3745;
+  --text-light: #eef0e4;
+}
+
+/* Tidewater — stormy teal / pacific blue / parchment / amber */
+.ll-app[data-theme="tidewater"] {
+  --bg: linear-gradient(160deg, #16697a, #489fb5);
+  --off-white: #ede7e3;
+  --off-white-2: #ddd6d1;
+  --base: #16697a;
+  --base-2: #489fb5;
+  --card: #ffffff;
+  --heading-footer: #16697a;
+  --trim: #16697a;
+  --accent: #ffa62b;
+  --accent-text: #3a2600;
+  --contrast: #489fb5;
+  --box-shadow: rgba(22, 105, 122, 0.3);
+  --text-dark: #23424a;
+  --text-light: #ede7e3;
 }
 
 * {
@@ -42,7 +101,7 @@ body {
   min-height: 100vh;
   font-family: var(--font-body);
   color: var(--text-dark);
-  background: url("/forest-bg.jpg") center / cover no-repeat fixed;
+  background: #23252f;
 }
 
 h1, h2, h3, h4, h5 {
@@ -51,11 +110,13 @@ h1, h2, h3, h4, h5 {
   text-shadow: var(--drop-shadow);
 }
 
-/* Sticky-footer app shell */
+/* Sticky-footer app shell (carries the theme + themed background) */
 .ll-app {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background: var(--bg);
+  background-attachment: fixed;
 }
 .ll-main {
   flex: 1;
@@ -156,11 +217,12 @@ h1, h2, h3, h4, h5 {
 
 /* ---- Character card ---- */
 .ll-card {
-  background: var(--base-2);
-  color: var(--off-white);
+  background: var(--card);
+  color: var(--text-dark);
   border-radius: 10px;
+  border-top: 4px solid var(--accent);
   padding: 18px;
-  box-shadow: 0 3px 6px var(--box-shadow);
+  box-shadow: 0 3px 10px var(--box-shadow);
   margin-bottom: 24px;
   transition: transform 0.25s ease;
 }
@@ -175,13 +237,13 @@ h1, h2, h3, h4, h5 {
 }
 .ll-card__title {
   font-family: var(--font-heading);
-  color: var(--text-light);
+  color: var(--heading-footer);
   margin: 0;
   font-size: 22px;
 }
 .ll-card__sub {
-  color: var(--off-white);
-  opacity: 0.9;
+  color: var(--trim);
+  opacity: 0.8;
   font-size: 14px;
 }
 
@@ -203,7 +265,7 @@ h1, h2, h3, h4, h5 {
 }
 .ll-btn--accent {
   background: var(--accent);
-  color: var(--text-dark);
+  color: var(--accent-text);
   text-shadow: none;
 }
 .ll-btn--accent:hover {
@@ -579,4 +641,27 @@ h1, h2, h3, h4, h5 {
   text-align: center;
   padding: 4px;
   font-weight: 700;
+}
+
+/* Floating theme switcher */
+.ll-theme-toggle {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 60;
+  border: none;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  background: var(--accent);
+  color: var(--accent-text);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.ll-theme-toggle:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
 }
