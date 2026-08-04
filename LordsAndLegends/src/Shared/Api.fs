@@ -21,8 +21,11 @@ type NewCharacter =
       Specialty: string
       Height: string
       Age: int
+      /// Base stats as assigned by the player (race modifiers applied server-side).
       Primary: PrimaryStats
       Secondary: SecondaryStats
+      /// The player's chosen minor stats (name -> value).
+      MinorStats: Map<string, int>
       /// Result of the player's 2d8 roll for starting HP.
       HpRoll: int }
 

@@ -82,31 +82,6 @@ type StartingArray =
     | Adventurer
 
 // ---------------------------------------------------------------------------
-// Content references. Races and Vocations are *data*, not code — they are
-// looked up by id from a content store (JSON now, DB/admin later) so adding a
-// race from Chapter 2 or a vocation from Chapter 3 never touches the schema.
-// ---------------------------------------------------------------------------
-
-/// A passive trait granted by a race or vocation.
-type Passive = { Name: string; Description: string }
-
-/// A playable race (Chapter 2). `Mass` feeds the derived Mass stat.
-type Race =
-    { Id: string
-      Name: string
-      Mass: int
-      PrimaryModifiers: (PrimaryStat * int) list
-      SecondaryModifiers: (SecondaryStat * int) list
-      Passives: Passive list }
-
-/// A starting Vocation (Chapter 3): a curated background package.
-type Vocation =
-    { Id: string
-      Name: string
-      Description: string
-      StartingSkills: string list }
-
-// ---------------------------------------------------------------------------
 // Per-character collections. These mirror the original app's weapons / spells /
 // skills / equipment / languages / micro-stats, but are stored as typed JSONB
 // lists on the character (not one table each), so adding a field to any of
@@ -149,6 +124,32 @@ module Items =
     let emptySkill: Skill = { Name = ""; DamageDie = ""; ActionType = ""; Cost = ""; Description = "" }
     let emptyEquipment: EquipmentItem = { Name = ""; ItemType = ""; Description = "" }
     let emptyMicroStat: MicroStat = { Name = ""; Value = 0 }
+
+// ---------------------------------------------------------------------------
+// Content references. Races and Vocations are *data*, looked up by id from a
+// content store — adding a race or vocation never touches the schema. A race
+// applies stat modifiers + Mass and grants passives; a vocation grants a
+// starting package (skills, weapons, equipment).
+// ---------------------------------------------------------------------------
+
+/// A passive trait granted by a race or vocation.
+type Passive = { Name: string; Description: string }
+
+type Race =
+    { Id: string
+      Name: string
+      Mass: int
+      PrimaryModifiers: (PrimaryStat * int) list
+      SecondaryModifiers: (SecondaryStat * int) list
+      Passives: Passive list }
+
+type Vocation =
+    { Id: string
+      Name: string
+      Description: string
+      StartingSkills: string list
+      StartingWeapons: Weapon list
+      StartingEquipment: EquipmentItem list }
 
 // ---------------------------------------------------------------------------
 // Minor Stats: a FIXED taxonomy (from the Final Stat Structure doc), each
@@ -218,5 +219,6 @@ type Character =
       Equipment: EquipmentItem list
       Languages: string list
       MicroStats: MicroStat list
+      Passives: Passive list
       /// Values for the fixed Minor Stat taxonomy (name -> modifier); unset = 0.
       MinorStats: Map<string, int> }

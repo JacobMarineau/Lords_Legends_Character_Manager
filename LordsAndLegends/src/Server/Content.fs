@@ -37,16 +37,34 @@ let vocations: Vocation list =
     [ { Id = "warrior"
         Name = "Warrior"
         Description = "A frontline combatant trained with steel and shield."
-        StartingSkills = [ "Weapon Mastery"; "Athletics" ] }
+        StartingSkills = [ "Weapon Mastery"; "Athletics" ]
+        StartingWeapons =
+          [ { Name = "Arming Sword"; DamageDie = "1d8"; Description = "A reliable one-handed blade." } ]
+        StartingEquipment =
+          [ { Name = "Round Shield"; ItemType = "Armor"; Description = "Sturdy wooden shield with an iron boss." }
+            { Name = "Traveler's Pack"; ItemType = "Gear"; Description = "Bedroll, rope, rations." } ] }
       { Id = "scholar"
         Name = "Scholar"
         Description = "A student of history and the arcane sciences."
-        StartingSkills = [ "History"; "Science" ] }
+        StartingSkills = [ "History"; "Science" ]
+        StartingWeapons =
+          [ { Name = "Walking Staff"; DamageDie = "1d4"; Description = "A worn oak staff, good for travel and defense." } ]
+        StartingEquipment =
+          [ { Name = "Tome of Notes"; ItemType = "Gear"; Description = "A leather journal full of research." }
+            { Name = "Ink & Quill"; ItemType = "Gear"; Description = "For copying and scribing." } ] }
       { Id = "rogue"
         Name = "Rogue"
         Description = "A quick-fingered survivor who works from the shadows."
-        StartingSkills = [ "Stealth"; "Sleight of Hand" ] } ]
+        StartingSkills = [ "Stealth"; "Sleight of Hand" ]
+        StartingWeapons =
+          [ { Name = "Dagger"; DamageDie = "1d4"; Description = "Concealable and quick." } ]
+        StartingEquipment =
+          [ { Name = "Lockpicks"; ItemType = "Tool"; Description = "A slim set of picks and tension wrenches." }
+            { Name = "Dark Cloak"; ItemType = "Armor"; Description = "Muffles movement and hides your face." } ] } ]
 
 let content: Content = { Races = races; Vocations = vocations }
 
 let tryFindRace (raceId: string) = races |> List.tryFind (fun r -> r.Id = raceId)
+
+let tryFindVocation (vocationId: string) =
+    vocations |> List.tryFind (fun v -> v.Id = vocationId)

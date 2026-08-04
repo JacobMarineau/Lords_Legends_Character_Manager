@@ -35,12 +35,25 @@ let private signIn (ctx: HttpContext) (user: User) =
 // -- Character building (server-authoritative rules) ------------------------
 
 let private buildCharacter (ownerId: int) (nc: NewCharacter) : Character =
-    let mass =
-        Content.tryFindRace nc.RaceId
-        |> Option.map (fun r -> r.Mass)
-        |> Option.defaultValue 0
+    let race = Content.tryFindRace nc.RaceId
+    let vocation = Content.tryFindVocation nc.VocationId
 
-    let maxHp = Mechanics.startingMaxHp nc.HpRoll nc.Primary.Vitality
+    // Race modifiers are applied server-side so they can't be faked client-side.
+    let primary =
+        match race with
+        | Some r -> Mechanics.applyRaceToPrimary r.PrimaryModifiers nc.Primary
+        | None -> nc.Primary
+
+    let secondary =
+        match race with
+        | Some r -> Mechanics.applyRaceToSecondary r.SecondaryModifiers nc.Secondary
+        | None -> nc.Secondary
+
+    let mass = race |> Option.map (fun r -> r.Mass) |> Option.defaultValue 0
+    let maxHp = Mechanics.startingMaxHp nc.HpRoll primary.Vitality
+
+    let startWeapons = vocation |> Option.map (fun v -> v.StartingWeapons) |> Option.defaultValue []
+    let startEquipment = vocation |> Option.map (fun v -> v.StartingEquipment) |> Option.defaultValue []
 
     { Id = 0
       OwnerId = ownerId
@@ -50,8 +63,8 @@ let private buildCharacter (ownerId: int) (nc: NewCharacter) : Character =
       Specialty = nc.Specialty
       Height = nc.Height
       Age = nc.Age
-      Primary = nc.Primary
-      Secondary = nc.Secondary
+      Primary = primary
+      Secondary = secondary
       ExtendedWillpower = Mechanics.StartingExtendedWillpower
       MaxHp = maxHp
       CurrentHp = maxHp
@@ -66,13 +79,14 @@ let private buildCharacter (ownerId: int) (nc: NewCharacter) : Character =
       Ar = 0
       Os = 0
       Mr = 0
-      Weapons = []
+      Weapons = startWeapons
       Spells = []
       Skills = []
-      Equipment = []
+      Equipment = startEquipment
       Languages = []
       MicroStats = []
-      MinorStats = Map.empty }
+      Passives = []
+      MinorStats = nc.MinorStats }
 
 // -- Auth API ---------------------------------------------------------------
 

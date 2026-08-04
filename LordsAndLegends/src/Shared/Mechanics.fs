@@ -49,6 +49,33 @@ module Mechanics =
     let startingMaxHp (hpRoll: int) (vitalityValue: int) : int =
         hpRoll + primaryModifier vitalityValue
 
+    // -- Race modifiers ----------------------------------------------------
+
+    /// Add a race's primary modifiers onto assigned base stats.
+    let applyRaceToPrimary (mods: (PrimaryStat * int) list) (p: PrimaryStats) : PrimaryStats =
+        mods
+        |> List.fold
+            (fun (acc: PrimaryStats) (stat, d) ->
+                match stat with
+                | Might -> { acc with Might = acc.Might + d }
+                | Agility -> { acc with Agility = acc.Agility + d }
+                | Vitality -> { acc with Vitality = acc.Vitality + d }
+                | Intelligence -> { acc with Intelligence = acc.Intelligence + d }
+                | Cunning -> { acc with Cunning = acc.Cunning + d }
+                | Presence -> { acc with Presence = acc.Presence + d })
+            p
+
+    /// Add a race's secondary modifiers onto assigned base stats.
+    let applyRaceToSecondary (mods: (SecondaryStat * int) list) (s: SecondaryStats) : SecondaryStats =
+        mods
+        |> List.fold
+            (fun (acc: SecondaryStats) (stat, d) ->
+                match stat with
+                | Willpower -> { acc with Willpower = acc.Willpower + d }
+                | Ferocity -> { acc with Ferocity = acc.Ferocity + d }
+                | Arcana -> { acc with Arcana = acc.Arcana + d })
+            s
+
 
 /// Stat generation (Chapter 1, Step 3). Deterministic data (the Hard Start
 /// arrays) lives here; dice rolling takes the raw die results so it stays pure
@@ -88,3 +115,52 @@ module StatGeneration =
 
     /// Soft Start secondary value: a single d4 result is the stat value.
     let softSecondary (d4: int) : int = d4
+
+    // -- Standard arrays across BOTH rulebooks -----------------------------
+
+    /// Every standard-array option the creator offers (both rulebooks).
+    type ArrayOption =
+        | Ch1Normal
+        | Ch1Adventurer
+        | FinalLow
+        | FinalHigh
+
+    let arrayOptions = [ Ch1Normal; Ch1Adventurer; FinalLow; FinalHigh ]
+
+    let arrayLabel =
+        function
+        | Ch1Normal -> "Chapter 1 — Normal Person"
+        | Ch1Adventurer -> "Chapter 1 — Adventurer"
+        | FinalLow -> "Final Structure — Standard (Low)"
+        | FinalHigh -> "Final Structure — Standard (High)"
+
+    let arrayId =
+        function
+        | Ch1Normal -> "ch1-normal"
+        | Ch1Adventurer -> "ch1-adventurer"
+        | FinalLow -> "final-low"
+        | FinalHigh -> "final-high"
+
+    let arrayFromId =
+        function
+        | "ch1-adventurer" -> Ch1Adventurer
+        | "final-low" -> FinalLow
+        | "final-high" -> FinalHigh
+        | _ -> Ch1Normal
+
+    /// Six primary values to assign. NOTE: the Final doc lists only 5 Duo-Spec
+    /// values for 6 stats; the 6th is padded here (confirm the intended numbers).
+    let primaryPool =
+        function
+        | Ch1Normal -> [ 12; 10; 10; 8; 8; 6 ]
+        | Ch1Adventurer -> [ 14; 12; 10; 10; 8; 8 ]
+        | FinalLow -> [ 12; 10; 10; 8; 6; 6 ]
+        | FinalHigh -> [ 18; 16; 12; 10; 8; 8 ]
+
+    /// Three secondary values to assign (Willpower / Ferocity / Arcana).
+    let secondaryPool =
+        function
+        | Ch1Normal -> [ 2; 1; 1 ]
+        | Ch1Adventurer -> [ 3; 2; 2 ]
+        | FinalLow -> [ 2; 2; 1 ]
+        | FinalHigh -> [ 4; 4; 3 ]

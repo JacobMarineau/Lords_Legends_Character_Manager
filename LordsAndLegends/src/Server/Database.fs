@@ -113,6 +113,7 @@ let private schemaSql =
         equipment          JSONB   NOT NULL DEFAULT '[]'::jsonb,
         languages          JSONB   NOT NULL DEFAULT '[]'::jsonb,
         micro_stats        JSONB   NOT NULL DEFAULT '[]'::jsonb,
+        passives           JSONB   NOT NULL DEFAULT '[]'::jsonb,
         minor_stats        JSONB   NOT NULL DEFAULT '{}'::jsonb,
         created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
     );
@@ -139,6 +140,7 @@ let private migrationSql =
     ALTER TABLE character ADD COLUMN IF NOT EXISTS equipment    JSONB   NOT NULL DEFAULT '[]'::jsonb;
     ALTER TABLE character ADD COLUMN IF NOT EXISTS languages    JSONB   NOT NULL DEFAULT '[]'::jsonb;
     ALTER TABLE character ADD COLUMN IF NOT EXISTS micro_stats  JSONB   NOT NULL DEFAULT '[]'::jsonb;
+    ALTER TABLE character ADD COLUMN IF NOT EXISTS passives     JSONB   NOT NULL DEFAULT '[]'::jsonb;
     ALTER TABLE character ADD COLUMN IF NOT EXISTS minor_stats  JSONB   NOT NULL DEFAULT '{}'::jsonb;
     """
 
@@ -196,7 +198,8 @@ let private selectColumns =
      speed_class, soul_tier, focus_points, glint, thp, ar, os, mr, \
      weapons::text AS weapons, spells::text AS spells, skills::text AS skills, \
      equipment::text AS equipment, languages::text AS languages, \
-     micro_stats::text AS micro_stats, minor_stats::text AS minor_stats"
+     micro_stats::text AS micro_stats, passives::text AS passives, \
+     minor_stats::text AS minor_stats"
 
 let private toCharacter (read: RowReader) : Character =
     { Id = read.int "id"
@@ -238,6 +241,7 @@ let private toCharacter (read: RowReader) : Character =
       Equipment = listFromJson<EquipmentItem> (read.text "equipment")
       Languages = listFromJson<string> (read.text "languages")
       MicroStats = listFromJson<MicroStat> (read.text "micro_stats")
+      Passives = listFromJson<Passive> (read.text "passives")
       MinorStats = mapFromJson (read.text "minor_stats") }
 
 /// Every writable column, as (@param, SqlValue). Shared by insert and update.
@@ -277,6 +281,7 @@ let private writeParams (c: Character) =
       "@equipment", Sql.jsonb (toJson c.Equipment)
       "@languages", Sql.jsonb (toJson c.Languages)
       "@micro_stats", Sql.jsonb (toJson c.MicroStats)
+      "@passives", Sql.jsonb (toJson c.Passives)
       "@minor_stats", Sql.jsonb (toJson c.MinorStats) ]
 
 let getCharactersByOwner (ownerId: int) : Async<Character list> =
@@ -311,14 +316,14 @@ let insertCharacter (c: Character) : Async<int> =
              willpower, ferocity, arcana,
              extended_willpower, max_hp, current_hp, mass, injuries, max_injuries,
              speed_class, soul_tier, focus_points, glint, thp, ar, os, mr,
-             weapons, spells, skills, equipment, languages, micro_stats, minor_stats)
+             weapons, spells, skills, equipment, languages, micro_stats, passives, minor_stats)
          VALUES
             (@owner_id, @name, @race_id, @vocation_id, @specialty, @height, @age,
              @might, @agility, @vitality, @intelligence, @cunning, @presence,
              @willpower, @ferocity, @arcana,
              @extended_willpower, @max_hp, @current_hp, @mass, @injuries, @max_injuries,
              @speed_class, @soul_tier, @focus_points, @glint, @thp, @ar, @os, @mr,
-             @weapons, @spells, @skills, @equipment, @languages, @micro_stats, @minor_stats)
+             @weapons, @spells, @skills, @equipment, @languages, @micro_stats, @passives, @minor_stats)
          RETURNING id"
     |> Sql.parameters (("@owner_id", Sql.int c.OwnerId) :: writeParams c)
     |> Sql.executeRowAsync (fun read -> read.int "id")
@@ -344,7 +349,7 @@ let updateCharacter (c: Character) : Async<unit> =
                     thp=@thp, ar=@ar, os=@os, mr=@mr,
                     weapons=@weapons, spells=@spells, skills=@skills,
                     equipment=@equipment, languages=@languages, micro_stats=@micro_stats,
-                    minor_stats=@minor_stats
+                    passives=@passives, minor_stats=@minor_stats
                  WHERE id=@id"
             |> Sql.parameters (("@id", Sql.int c.Id) :: writeParams c)
             |> Sql.executeNonQueryAsync

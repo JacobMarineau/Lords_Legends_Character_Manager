@@ -47,6 +47,24 @@ let private nextTheme (t: string) =
     themes.[(i + 1) % themes.Length]
 
 // ---------------------------------------------------------------------------
+// Stat assignment: a permutation of pool indices to stats. Selecting a value
+// already used by another stat swaps them, keeping a valid one-to-one mapping.
+// ---------------------------------------------------------------------------
+
+let private initPrimaryAssign =
+    PrimaryStat.all |> List.mapi (fun i s -> PrimaryStat.name s, i) |> Map.ofList
+
+let private initSecondaryAssign =
+    SecondaryStat.all |> List.mapi (fun i s -> SecondaryStat.name s, i) |> Map.ofList
+
+let private assignSwap (m: Map<string, int>) (stat: string) (idx: int) =
+    let old = m |> Map.tryFind stat |> Option.defaultValue idx
+
+    match m |> Map.tryFindKey (fun k v -> v = idx && k <> stat) with
+    | Some other -> m |> Map.add stat idx |> Map.add other old
+    | None -> m |> Map.add stat idx
+
+// ---------------------------------------------------------------------------
 // Model
 // ---------------------------------------------------------------------------
 
@@ -81,7 +99,10 @@ type Model =
       Specialty: string
       Height: string
       Age: int
-      Array: StartingArray
+      MethodId: string
+      PrimaryAssign: Map<string, int>
+      SecondaryAssign: Map<string, int>
+      MinorPicks: string list
       HpRoll: int
       // Sheet editing
       Draft: Character option
@@ -113,7 +134,10 @@ type Msg =
     | SetSpecialty of string
     | SetHeight of string
     | SetAge of int
-    | SetArray of StartingArray
+    | SetMethod of string
+    | AssignPrimary of string * int
+    | AssignSecondary of string * int
+    | SetMinorPick of int * string
     | SetHpRoll of int
     | Submit
     | Created of Character
@@ -138,7 +162,10 @@ let private freshCreator (m: Model) =
         Specialty = ""
         Height = ""
         Age = 0
-        Array = NormalPerson
+        MethodId = StatGeneration.arrayId StatGeneration.Ch1Normal
+        PrimaryAssign = initPrimaryAssign
+        SecondaryAssign = initSecondaryAssign
+        MinorPicks = [ ""; ""; "" ]
         HpRoll = 9 }
 
 let init () =
@@ -161,7 +188,10 @@ let init () =
           Specialty = ""
           Height = ""
           Age = 0
-          Array = NormalPerson
+          MethodId = StatGeneration.arrayId StatGeneration.Ch1Normal
+          PrimaryAssign = initPrimaryAssign
+          SecondaryAssign = initSecondaryAssign
+          MinorPicks = [ ""; ""; "" ]
           HpRoll = 9
           Draft = None
           Saving = false
@@ -175,27 +205,44 @@ let private loadAppData =
         [ Cmd.OfAsync.either Api.characterApi.getContent () ContentLoaded Failed
           Cmd.OfAsync.either Api.characterApi.getCharacters () CharactersLoaded Failed ]
 
-let private buildNewCharacter (m: Model) : NewCharacter =
-    let p = StatGeneration.primaryArray m.Array
-    let s = StatGeneration.secondaryArray m.Array
+/// The player's assigned base stats (before race modifiers), from the chosen
+/// method's pool and their index assignment.
+let private assignedPrimary (m: Model) : PrimaryStats =
+    let pool = StatGeneration.primaryPool (StatGeneration.arrayFromId m.MethodId)
+    let v name = pool.[m.PrimaryAssign |> Map.tryFind name |> Option.defaultValue 0]
 
+    { Might = v "Might"
+      Agility = v "Agility"
+      Vitality = v "Vitality"
+      Intelligence = v "Intelligence"
+      Cunning = v "Cunning"
+      Presence = v "Presence" }
+
+let private assignedSecondary (m: Model) : SecondaryStats =
+    let pool = StatGeneration.secondaryPool (StatGeneration.arrayFromId m.MethodId)
+    let v name = pool.[m.SecondaryAssign |> Map.tryFind name |> Option.defaultValue 0]
+
+    { Willpower = v "Willpower"
+      Ferocity = v "Ferocity"
+      Arcana = v "Arcana" }
+
+/// Chosen minor stats -> values. First two picks get +4, the third +3.
+let private chosenMinorStats (m: Model) : Map<string, int> =
+    m.MinorPicks
+    |> List.mapi (fun i name -> name, (if i < 2 then 4 else 3))
+    |> List.filter (fun (name, _) -> name <> "")
+    |> Map.ofList
+
+let private buildNewCharacter (m: Model) : NewCharacter =
     { Name = m.Name
       RaceId = m.RaceId
       VocationId = m.VocationId
       Specialty = m.Specialty
       Height = m.Height
       Age = m.Age
-      Primary =
-        { Might = p.[0]
-          Agility = p.[1]
-          Vitality = p.[2]
-          Intelligence = p.[3]
-          Cunning = p.[4]
-          Presence = p.[5] }
-      Secondary =
-        { Willpower = s.[0]
-          Ferocity = s.[1]
-          Arcana = s.[2] }
+      Primary = assignedPrimary m
+      Secondary = assignedSecondary m
+      MinorStats = chosenMinorStats m
       HpRoll = m.HpRoll }
 
 let update (msg: Msg) (model: Model) =
@@ -250,7 +297,12 @@ let update (msg: Msg) (model: Model) =
     | SetSpecialty s -> { model with Specialty = s }, Cmd.none
     | SetHeight h -> { model with Height = h }, Cmd.none
     | SetAge a -> { model with Age = a }, Cmd.none
-    | SetArray arr -> { model with Array = arr }, Cmd.none
+    | SetMethod id -> { model with MethodId = id }, Cmd.none
+    | AssignPrimary(stat, idx) -> { model with PrimaryAssign = assignSwap model.PrimaryAssign stat idx }, Cmd.none
+    | AssignSecondary(stat, idx) -> { model with SecondaryAssign = assignSwap model.SecondaryAssign stat idx }, Cmd.none
+    | SetMinorPick(slot, name) ->
+        let picks = model.MinorPicks |> List.mapi (fun i p -> if i = slot then name else p)
+        { model with MinorPicks = picks }, Cmd.none
     | SetHpRoll n -> { model with HpRoll = n }, Cmd.none
     | Submit ->
         { model with Loading = true; Error = None },
@@ -503,7 +555,7 @@ let private listPage (model: Model) (dispatch: Msg -> unit) =
 // ---------------------------------------------------------------------------
 
 let private stepper (current: int) =
-    let labels = [ 1, "Identity"; 2, "Stats"; 3, "Review" ]
+    let labels = [ 1, "Identity"; 2, "Stats"; 3, "Minor"; 4, "Review" ]
 
     Html.div
         [ prop.className "ll-steps"
@@ -513,9 +565,45 @@ let private stepper (current: int) =
                         [ prop.className (if n = current then "ll-step is-active" elif n < current then "ll-step is-done" else "ll-step")
                           prop.children [ Html.span [ prop.className "ll-step__num"; prop.text (string n) ]; Html.span [ prop.text label ] ] ] ] ]
 
+/// A row that assigns one pool value (by index) to a stat via a dropdown.
+let private assignRow (label: string) (pool: int list) (currentIdx: int) (onPick: int -> unit) =
+    Html.div
+        [ prop.className "ll-assign-row"
+          prop.children
+              [ Html.span [ prop.className "ll-assign-label"; prop.text label ]
+                Html.select
+                    [ prop.className "ll-select ll-assign-select"
+                      prop.value (string currentIdx)
+                      prop.onChange (fun (v: string) ->
+                          match System.Int32.TryParse v with
+                          | true, i -> onPick i
+                          | _ -> ())
+                      prop.children [ for i in 0 .. pool.Length - 1 -> Html.option [ prop.value (string i); prop.text (string pool.[i]) ] ] ] ] ]
+
 let private createPage (model: Model) (dispatch: Msg -> unit) =
-    let prim = StatGeneration.primaryArray model.Array
-    let sec = StatGeneration.secondaryArray model.Array
+    let method = StatGeneration.arrayFromId model.MethodId
+    let pPool = StatGeneration.primaryPool method
+    let sPool = StatGeneration.secondaryPool method
+    let methodOptions = [ for o in StatGeneration.arrayOptions -> StatGeneration.arrayId o, StatGeneration.arrayLabel o ]
+
+    let idxP name = model.PrimaryAssign |> Map.tryFind name |> Option.defaultValue 0
+    let idxS name = model.SecondaryAssign |> Map.tryFind name |> Option.defaultValue 0
+
+    // Review calculations (race modifiers previewed with the shared Mechanics).
+    let race = model.Content |> Option.bind (fun c -> c.Races |> List.tryFind (fun r -> r.Id = model.RaceId))
+    let voc = model.Content |> Option.bind (fun c -> c.Vocations |> List.tryFind (fun v -> v.Id = model.VocationId))
+    let basePrim = assignedPrimary model
+    let baseSec = assignedSecondary model
+
+    let finalPrim =
+        match race with
+        | Some r -> Mechanics.applyRaceToPrimary r.PrimaryModifiers basePrim
+        | None -> basePrim
+
+    let finalSec =
+        match race with
+        | Some r -> Mechanics.applyRaceToSecondary r.SecondaryModifiers baseSec
+        | None -> baseSec
 
     let stepBody =
         match model.Step with
@@ -529,22 +617,34 @@ let private createPage (model: Model) (dispatch: Msg -> unit) =
                   numField "Age" model.Age (SetAge >> dispatch) ]
         | 2 ->
             Html.div
-                [ selectField
-                      "Stat Array (Hard Start)"
-                      (match model.Array with
-                       | NormalPerson -> "normal"
-                       | Adventurer -> "adventurer")
-                      [ "normal", "Normal Person"; "adventurer", "Adventurer" ]
-                      (fun v -> dispatch (SetArray(if v = "adventurer" then Adventurer else NormalPerson)))
-                  Html.div
-                      [ prop.className "ll-alert ll-alert--info"
-                        prop.children
-                            [ Html.strong [ prop.text "Primary: " ]
-                              Html.span [ prop.text (prim |> List.map string |> String.concat ", ") ]
-                              Html.br []
-                              Html.strong [ prop.text "Secondary (WP / Fer / Arc): " ]
-                              Html.span [ prop.text (sec |> List.map string |> String.concat ", ") ] ] ]
+                [ selectField "Generation Method" model.MethodId methodOptions (SetMethod >> dispatch)
+                  Html.p [ prop.className "ll-muted"; prop.style [ style.marginTop 0 ]; prop.text "Assign each value to the stat you want. Picking a value another stat holds swaps them." ]
+                  Html.div [ prop.className "ll-section-label"; prop.style [ style.color "var(--heading-footer)" ]; prop.text "Primary" ]
+                  Html.div [ prop.children [ for s in PrimaryStat.all -> assignRow (PrimaryStat.name s) pPool (idxP (PrimaryStat.name s)) (fun i -> dispatch (AssignPrimary(PrimaryStat.name s, i))) ] ]
+                  Html.div [ prop.className "ll-section-label"; prop.style [ style.color "var(--heading-footer)" ]; prop.text "Secondary" ]
+                  Html.div [ prop.children [ for s in SecondaryStat.all -> assignRow (SecondaryStat.name s) sPool (idxS (SecondaryStat.name s)) (fun i -> dispatch (AssignSecondary(SecondaryStat.name s, i))) ] ]
                   numField "HP Roll (2d8)" model.HpRoll (SetHpRoll >> dispatch) ]
+        | 3 ->
+            Html.div
+                [ Html.p [ prop.className "ll-muted"; prop.text "Choose 3 minor stats. The first two get +4, the third +3." ]
+                  Html.div
+                      [ prop.children
+                            [ for slot in 0..2 ->
+                                  let value = model.MinorPicks |> List.tryItem slot |> Option.defaultValue ""
+                                  let bonus = if slot < 2 then "+4" else "+3"
+
+                                  Html.div
+                                      [ prop.className "ll-assign-row"
+                                        prop.children
+                                            [ Html.span [ prop.className "ll-assign-label"; prop.text bonus ]
+                                              Html.select
+                                                  [ prop.className "ll-select ll-assign-select"
+                                                    prop.style [ style.flexGrow 1 ]
+                                                    prop.value value
+                                                    prop.onChange (fun (v: string) -> dispatch (SetMinorPick(slot, v)))
+                                                    prop.children
+                                                        [ Html.option [ prop.value ""; prop.text "— choose a minor stat —" ]
+                                                          for n in MinorStats.all -> Html.option [ prop.value n; prop.text n ] ] ] ] ] ] ] ]
         | _ ->
             Html.div
                 [ Html.div
@@ -553,14 +653,42 @@ let private createPage (model: Model) (dispatch: Msg -> unit) =
                             [ Html.strong [ prop.text (if model.Name = "" then "(unnamed)" else model.Name) ]
                               Html.text (
                                   sprintf
-                                      " — %s %s%s"
+                                      " — %s · %s%s"
                                       (nameOf (raceOptions model.Content) model.RaceId)
                                       (nameOf (vocationOptions model.Content) model.VocationId)
-                                      (if model.Specialty = "" then "" else ", " + model.Specialty)
-                              )
-                              Html.br []
-                              Html.text (sprintf "Primary %s · Secondary %s · HP roll %d" (prim |> List.map string |> String.concat "/") (sec |> List.map string |> String.concat "/") model.HpRoll) ] ]
-                  Html.p [ prop.className "ll-muted"; prop.text "You can add weapons, spells, gear and more on the character sheet after creating." ] ]
+                                      (if model.Specialty = "" then "" else " · " + model.Specialty)
+                              ) ] ]
+                  Html.div [ prop.className "ll-section-label"; prop.style [ style.color "var(--heading-footer)" ]; prop.text "Primary (with race)" ]
+                  Html.div
+                      [ prop.className "ll-stats"
+                        prop.children
+                            [ for s in PrimaryStat.all do
+                                  let v = finalPrim.Value s
+                                  statTile ("ll-stat--" + (PrimaryStat.name s).ToLower()) (PrimaryStat.name s) (string v) (fmtMod (Mechanics.primaryModifier v)) ] ]
+                  Html.div [ prop.className "ll-section-label"; prop.style [ style.color "var(--heading-footer)" ]; prop.text "Secondary (with race)" ]
+                  Html.div
+                      [ prop.className "ll-stats"
+                        prop.children
+                            [ for s in SecondaryStat.all do
+                                  let v = finalSec.Value s
+                                  statTile ("ll-stat--" + (SecondaryStat.name s).ToLower()) (SecondaryStat.name s) (string v) "" ] ]
+                  (match race with
+                   | Some r when not (List.isEmpty r.Passives) ->
+                       Html.div
+                           [ prop.className "ll-alert ll-alert--info"
+                             prop.children
+                                 [ Html.strong [ prop.text "Race passives: " ]
+                                   Html.span [ prop.text (r.Passives |> List.map (fun p -> p.Name) |> String.concat ", ") ] ] ]
+                   | _ -> Html.none)
+                  (match voc with
+                   | Some v ->
+                       Html.div
+                           [ prop.className "ll-alert ll-alert--info"
+                             prop.children
+                                 [ Html.strong [ prop.text "Starting gear: " ]
+                                   Html.span [ prop.text ((v.StartingWeapons |> List.map (fun w -> w.Name)) @ (v.StartingEquipment |> List.map (fun e -> e.Name)) |> String.concat ", ") ] ] ]
+                   | None -> Html.none)
+                  Html.p [ prop.className "ll-muted"; prop.text "You can fine-tune everything on the character sheet after creating." ] ]
 
     let navButtons =
         Html.div
@@ -569,7 +697,7 @@ let private createPage (model: Model) (dispatch: Msg -> unit) =
               prop.children
                   [ if model.Step > 1 then
                         Html.button [ prop.className "ll-btn ll-btn--ghost"; prop.text "Back"; prop.onClick (fun _ -> dispatch (SetStep(model.Step - 1))) ]
-                    if model.Step < 3 then
+                    if model.Step < 4 then
                         Html.button
                             [ prop.className "ll-btn ll-btn--accent"
                               prop.disabled (model.Step = 1 && model.Name.Trim() = "")
@@ -830,6 +958,42 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
                       (fun () -> d (fun x -> { x with MicroStats = removeAt i x.MicroStats })) ]
             (fun () -> d (fun x -> { x with MicroStats = x.MicroStats @ [ Items.emptyMicroStat ] }))
 
+    let passives =
+        collectionEditor
+            "Passives"
+            "+ Passive"
+            [ for i, p in List.indexed c.Passives ->
+                  itemCard
+                      [ cardBox "Name" p.Name (fun v -> d (fun x -> { x with Passives = updateAt i (fun (it: Passive) -> { it with Name = v }) x.Passives }))
+                        cardBox "Description" p.Description (fun v -> d (fun x -> { x with Passives = updateAt i (fun (it: Passive) -> { it with Description = v }) x.Passives })) ]
+                      (fun () -> d (fun x -> { x with Passives = removeAt i x.Passives })) ]
+            (fun () -> d (fun x -> { x with Passives = x.Passives @ [ ({ Name = ""; Description = "" }: Passive) ] }))
+
+    // Read-only summary of what the chosen race & vocation grant.
+    let raceVocInfo =
+        let race = model.Content |> Option.bind (fun ct -> ct.Races |> List.tryFind (fun r -> r.Id = c.RaceId))
+        let voc = model.Content |> Option.bind (fun ct -> ct.Vocations |> List.tryFind (fun v -> v.Id = c.VocationId))
+
+        sheetSection
+            "Race & Vocation"
+            [ Html.div
+                  [ prop.style [ style.marginBottom 8 ]
+                    prop.children
+                        [ Html.strong [ prop.text (sprintf "Race: %s" (nameOf (raceOptions model.Content) c.RaceId)) ]
+                          (match race with
+                           | Some r when not (List.isEmpty r.Passives) ->
+                               Html.ul
+                                   [ prop.style [ style.marginTop 4; style.marginBottom 0 ]
+                                     prop.children [ for p in r.Passives -> Html.li [ prop.children [ Html.strong [ prop.text (p.Name + ": ") ]; Html.span [ prop.text p.Description ] ] ] ] ]
+                           | _ -> Html.none) ] ]
+              Html.div
+                  [ prop.children
+                        [ Html.strong [ prop.text (sprintf "Vocation: %s" (nameOf (vocationOptions model.Content) c.VocationId)) ]
+                          (match voc with
+                           | Some v when not (List.isEmpty v.StartingSkills) ->
+                               Html.div [ prop.className "ll-muted"; prop.style [ style.marginTop 4 ]; prop.text ("Starting skills: " + (v.StartingSkills |> String.concat ", ")) ]
+                           | _ -> Html.none) ] ] ]
+
     Html.div
         [ prop.className "ll-panel"
           prop.children
@@ -853,6 +1017,7 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
                                               prop.text (if model.Saving then "Saving…" else "Save")
                                               prop.onClick (fun _ -> dispatch SaveDraft) ] ] ] ] ]
                 identity
+                raceVocInfo
                 vitals
                 primaryStats
                 secondaryStats
@@ -862,7 +1027,8 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
                 skills
                 equipment
                 languages
-                microStats ] ]
+                microStats
+                passives ] ]
 
 // ---------------------------------------------------------------------------
 // Root view

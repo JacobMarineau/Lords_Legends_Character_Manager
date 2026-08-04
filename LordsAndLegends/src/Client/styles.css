@@ -665,3 +665,19 @@ h1, h2, h3, h4, h5 {
   filter: brightness(1.08);
   transform: translateY(-1px);
 }
+
+/* Creator stat-assignment rows */
+.ll-assign-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.ll-assign-label {
+  flex: 0 0 130px;
+  font-weight: 600;
+  color: var(--heading-footer);
+}
+.ll-assign-select {
+  flex: 1;
+}
