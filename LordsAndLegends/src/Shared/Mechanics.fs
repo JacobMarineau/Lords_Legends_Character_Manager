@@ -65,6 +65,28 @@ module Mechanics =
                 | Presence -> { acc with Presence = acc.Presence + d })
             p
 
+    // -- Minor stats inherit their governing major stat's modifier ---------
+
+    /// The modifier a minor stat inherits from its governing major stat.
+    /// e.g. Might 19 (+4) means every Might minor stat gains +4.
+    /// Ferocity/Arcana contribute their value; Willpower and Special contribute 0.
+    let minorInheritedModifier (group: string) (primary: PrimaryStats) (secondary: SecondaryStats) : int =
+        match group with
+        | "Might" -> primaryModifier primary.Might
+        | "Agility" -> primaryModifier primary.Agility
+        | "Vitality" -> primaryModifier primary.Vitality
+        | "Intelligence" -> primaryModifier primary.Intelligence
+        | "Cunning" -> primaryModifier primary.Cunning
+        | "Presence" -> primaryModifier primary.Presence
+        | "Ferocity" -> secondary.Ferocity
+        | "Arcana" -> secondary.Arcana
+        | _ -> 0
+
+    /// A minor stat's effective modifier = its own value + the inherited major
+    /// modifier for its group.
+    let minorEffective (name: string) (ownValue: int) (primary: PrimaryStats) (secondary: SecondaryStats) : int =
+        ownValue + minorInheritedModifier (MinorStats.groupOf name) primary secondary
+
     /// Add a race's secondary modifiers onto assigned base stats.
     let applyRaceToSecondary (mods: (SecondaryStat * int) list) (s: SecondaryStats) : SecondaryStats =
         mods

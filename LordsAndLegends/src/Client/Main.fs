@@ -849,29 +849,42 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
     let minorStats =
         let getVal name = c.MinorStats |> Map.tryFind name |> Option.defaultValue 0
 
+        let renderGroup (group: string, names: string list) =
+            let inherited = Mechanics.minorInheritedModifier group c.Primary c.Secondary
+
+            Html.div
+                [ prop.className "ll-minorgroup"
+                  prop.children
+                      [ Html.div
+                            [ prop.className "ll-minorgroup__title"
+                              prop.children
+                                  [ Html.span [ prop.text group ]
+                                    (if group = "Special" then
+                                         Html.none
+                                     else
+                                         Html.span [ prop.className "ll-minorgroup__mod"; prop.text (sprintf "inherits %s" (fmtMod inherited)) ]) ] ]
+                        Html.div
+                            [ prop.className "ll-minorgrid"
+                              prop.children
+                                  [ for name in names ->
+                                        Html.label
+                                            [ prop.className "ll-minorstat"
+                                              prop.children
+                                                  [ Html.span [ prop.className "ll-minorstat__label"; prop.text name ]
+                                                    Html.input
+                                                        [ prop.className "ll-input ll-minorstat__input"
+                                                          prop.type' "number"
+                                                          prop.value (getVal name)
+                                                          prop.onChange (fun (v: string) ->
+                                                              match System.Int32.TryParse v with
+                                                              | true, n -> d (fun x -> { x with MinorStats = Map.add name n x.MinorStats })
+                                                              | _ -> ()) ]
+                                                    Html.span [ prop.className "ll-minorstat__eff"; prop.text (fmtMod (getVal name + inherited)) ] ] ] ] ] ] ]
+
         sheetSection
             "Minor Stats"
-            [ for (group, names) in MinorStats.groups ->
-                  Html.div
-                      [ prop.className "ll-minorgroup"
-                        prop.children
-                            [ Html.div [ prop.className "ll-minorgroup__title"; prop.text group ]
-                              Html.div
-                                  [ prop.className "ll-minorgrid"
-                                    prop.children
-                                        [ for name in names ->
-                                              Html.label
-                                                  [ prop.className "ll-minorstat"
-                                                    prop.children
-                                                        [ Html.span [ prop.className "ll-minorstat__label"; prop.text name ]
-                                                          Html.input
-                                                              [ prop.className "ll-input ll-minorstat__input"
-                                                                prop.type' "number"
-                                                                prop.value (getVal name)
-                                                                prop.onChange (fun (v: string) ->
-                                                                    match System.Int32.TryParse v with
-                                                                    | true, n -> d (fun x -> { x with MinorStats = Map.add name n x.MinorStats })
-                                                                    | _ -> ()) ] ] ] ] ] ] ] ]
+            (Html.p [ prop.className "ll-muted"; prop.style [ style.marginTop 0 ]; prop.text "Each minor stat inherits its major stat's modifier. The value on the right is what you roll with." ]
+             :: (MinorStats.groups |> List.map renderGroup))
 
     // Collections (rendered as neat cards)
     let weapons =

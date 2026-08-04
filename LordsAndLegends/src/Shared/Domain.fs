@@ -175,6 +175,12 @@ module MinorStats =
     /// Flat list of every minor stat name.
     let all = groups |> List.collect snd
 
+    /// The major stat that governs a minor stat ("Special" if ungoverned).
+    let groupOf (name: string) =
+        groups
+        |> List.tryPick (fun (g, names) -> if List.contains name names then Some g else None)
+        |> Option.defaultValue "Special"
+
 // ---------------------------------------------------------------------------
 // The character aggregate. The 9 ruleset stats are structured records; every
 // open-ended list is a typed collection persisted as JSONB. No column-per-item.

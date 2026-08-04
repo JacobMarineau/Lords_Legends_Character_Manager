@@ -617,6 +617,22 @@ h1, h2, h3, h4, h5 {
   margin-bottom: 6px;
   border-bottom: 1px solid rgba(94, 88, 75, 0.25);
   padding-bottom: 3px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.ll-minorgroup__mod {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.ll-minorstat__eff {
+  flex: 0 0 auto;
+  min-width: 34px;
+  text-align: right;
+  font-weight: 700;
+  color: var(--contrast);
 }
 .ll-minorgrid {
   display: grid;

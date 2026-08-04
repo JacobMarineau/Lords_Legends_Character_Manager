@@ -73,6 +73,24 @@ let ``hard start arrays match the doc`` () =
     Assert.Equal<int list>([ 3; 2; 2 ], StatGeneration.secondaryArray Adventurer)
 
 [<Fact>]
+let ``minor stats inherit their governing major stat modifier`` () =
+    let primary =
+        { Might = 19
+          Agility = 10
+          Vitality = 10
+          Intelligence = 10
+          Cunning = 10
+          Presence = 10 }
+
+    let secondary = { Willpower = 2; Ferocity = 3; Arcana = 4 }
+    // Might 19 -> +4; Athletics own value 4 -> effective +8.
+    Assert.Equal(8, Mechanics.minorEffective "Athletics" 4 primary secondary)
+    // Ferocity group inherits the Ferocity value (3); own 0 -> 3.
+    Assert.Equal(3, Mechanics.minorEffective "Physical Save Modifier" 0 primary secondary)
+    // Special/ungoverned inherits nothing; Perception own 2 -> 2.
+    Assert.Equal(2, Mechanics.minorEffective "Perception" 2 primary secondary)
+
+[<Fact>]
 let ``soft primary sums four d4 and re-rolls a single 1`` () =
     // No reroll: just the sum.
     Assert.Equal(10, StatGeneration.softPrimary [ 4; 3; 2; 1 ] None)
