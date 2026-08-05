@@ -697,3 +697,91 @@ h1, h2, h3, h4, h5 {
 .ll-assign-select {
   flex: 1;
 }
+
+/* Damage-component editor rows */
+.ll-dmg-row {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  margin-bottom: 5px;
+  flex-wrap: wrap;
+}
+.ll-dmg-dice { flex: 0 0 68px; }
+.ll-dmg-flat { flex: 0 0 58px; text-align: center; }
+.ll-dmg-stat { flex: 0 0 104px; }
+.ll-dmg-type { flex: 1 1 90px; min-width: 78px; }
+
+/* Floating dice-roll result */
+.ll-rollpanel {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 70;
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  background: var(--card);
+  color: var(--text-dark);
+  border-radius: 12px;
+  border-top: 5px solid var(--accent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  padding: 12px 14px;
+}
+.ll-rollpanel__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ll-rollpanel__title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--heading-footer);
+}
+.ll-rollpanel__x {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--trim);
+  font-size: 14px;
+}
+.ll-rollpanel__grand {
+  font-size: 34px;
+  font-weight: 800;
+  font-family: var(--font-heading);
+  color: var(--accent);
+  line-height: 1.1;
+  margin: 2px 0 6px;
+}
+.ll-rollpanel__types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.ll-rollpanel__type {
+  background: var(--base);
+  color: var(--text-light);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.ll-rollpanel__detail {
+  font-size: 12px;
+  color: var(--trim);
+  line-height: 1.5;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  padding-top: 6px;
+}
+
+/* Prominent minor-stat effective badge (own value + inherited modifier) */
+.ll-minorstat__eff {
+  flex: 0 0 auto;
+  min-width: 42px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--accent-text);
+  background: var(--accent);
+  border-radius: 6px;
+  padding: 3px 7px;
+}

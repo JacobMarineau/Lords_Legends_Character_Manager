@@ -67,11 +67,10 @@ module Mechanics =
 
     // -- Minor stats inherit their governing major stat's modifier ---------
 
-    /// The modifier a minor stat inherits from its governing major stat.
-    /// e.g. Might 19 (+4) means every Might minor stat gains +4.
-    /// Ferocity/Arcana contribute their value; Willpower and Special contribute 0.
-    let minorInheritedModifier (group: string) (primary: PrimaryStats) (secondary: SecondaryStats) : int =
-        match group with
+    /// The modifier contributed by a stat, by name. Primary stats use their
+    /// modifier; Ferocity/Arcana use their value; Willpower and anything else 0.
+    let statModifierByName (name: string) (primary: PrimaryStats) (secondary: SecondaryStats) : int =
+        match name with
         | "Might" -> primaryModifier primary.Might
         | "Agility" -> primaryModifier primary.Agility
         | "Vitality" -> primaryModifier primary.Vitality
@@ -81,6 +80,11 @@ module Mechanics =
         | "Ferocity" -> secondary.Ferocity
         | "Arcana" -> secondary.Arcana
         | _ -> 0
+
+    /// The modifier a minor stat inherits from its governing major stat.
+    /// e.g. Might 19 (+4) means every Might minor stat gains +4.
+    let minorInheritedModifier (group: string) (primary: PrimaryStats) (secondary: SecondaryStats) : int =
+        statModifierByName group primary secondary
 
     /// A minor stat's effective modifier = its own value + the inherited major
     /// modifier for its group.
@@ -186,3 +190,33 @@ module StatGeneration =
         | Ch1Adventurer -> [ 3; 2; 2 ]
         | FinalLow -> [ 2; 2; 1 ]
         | FinalHigh -> [ 4; 4; 3 ]
+
+
+/// Dice expression parsing, shared by client and any server-side validation.
+module Dice =
+    /// Parse "2d6" / "d8" (count defaults to 1) into (count, sides). None if invalid.
+    let parse (s: string) : (int * int) option =
+        let t = s.Trim().ToLowerInvariant().Replace(" ", "")
+
+        if t = "" then
+            None
+        else
+            let parts = t.Split('d')
+
+            if parts.Length = 2 then
+                let count =
+                    if parts.[0] = "" then
+                        1
+                    else
+                        match System.Int32.TryParse parts.[0] with
+                        | true, v -> v
+                        | _ -> 0
+
+                match System.Int32.TryParse parts.[1] with
+                | true, sides when count > 0 && sides > 0 -> Some(count, sides)
+                | _ -> None
+            else
+                None
+
+    /// Stat names that can supply a modifier to a damage component.
+    let statModNames = [ ""; "Might"; "Agility"; "Vitality"; "Intelligence"; "Cunning"; "Presence"; "Ferocity"; "Arcana" ]

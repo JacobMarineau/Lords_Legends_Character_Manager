@@ -65,6 +65,57 @@ let private assignSwap (m: Map<string, int>) (stat: string) (idx: int) =
     | None -> m |> Map.add stat idx
 
 // ---------------------------------------------------------------------------
+// Dice roller: rolls each damage component (showing the dice), adds the flat
+// bonus and the chosen stat's modifier, and totals per damage type.
+// ---------------------------------------------------------------------------
+
+type DamageLine =
+    { DamageType: string
+      Total: int
+      Detail: string }
+
+type DamageRoll =
+    { Source: string
+      Lines: DamageLine list
+      ByType: (string * int) list
+      Grand: int }
+
+let private rng = System.Random()
+
+let private rollComponent (comp: DamageComponent) (p: PrimaryStats) (s: SecondaryStats) : DamageLine =
+    let rolls =
+        match Dice.parse comp.Dice with
+        | Some(n, sides) -> [ for _ in 1..n -> rng.Next(1, sides + 1) ]
+        | None -> []
+
+    let diceSum = List.sum rolls
+    let statMod = if comp.StatMod = "" then 0 else Mechanics.statModifierByName comp.StatMod p s
+    let total = diceSum + comp.Flat + statMod
+
+    let parts =
+        [ if not (List.isEmpty rolls) then
+              sprintf "%s (%s)" comp.Dice (rolls |> List.map string |> String.concat "+")
+          if comp.Flat <> 0 then sprintf "%+d" comp.Flat
+          if statMod <> 0 then sprintf "%+d %s" statMod comp.StatMod ]
+
+    { DamageType = (if comp.DamageType = "" then "Damage" else comp.DamageType)
+      Total = total
+      Detail = String.concat " " parts }
+
+let private rollDamage (source: string) (comps: DamageComponent list) (p: PrimaryStats) (s: SecondaryStats) : DamageRoll =
+    let lines = comps |> List.map (fun c -> rollComponent c p s)
+
+    let byType =
+        lines
+        |> List.groupBy (fun l -> l.DamageType)
+        |> List.map (fun (t, ls) -> t, ls |> List.sumBy (fun l -> l.Total))
+
+    { Source = source
+      Lines = lines
+      ByType = byType
+      Grand = lines |> List.sumBy (fun l -> l.Total) }
+
+// ---------------------------------------------------------------------------
 // Model
 // ---------------------------------------------------------------------------
 
@@ -109,7 +160,9 @@ type Model =
       Saving: bool
       SaveMsg: string option
       // Cosmetic
-      Theme: string }
+      Theme: string
+      // Dice roller
+      RollResult: DamageRoll option }
 
 type Msg =
     // Auth
@@ -150,6 +203,9 @@ type Msg =
     | Deleted of int
     // Cosmetic
     | CycleTheme
+    // Dice roller
+    | RollDamage of string * DamageComponent list
+    | ClearRoll
 
 // ---------------------------------------------------------------------------
 // Init / update
@@ -196,7 +252,8 @@ let init () =
           Draft = None
           Saving = false
           SaveMsg = None
-          Theme = loadTheme () }
+          Theme = loadTheme ()
+          RollResult = None }
 
     model, Cmd.OfAsync.either Api.authApi.getCurrentUser () GotCurrentUser Failed
 
@@ -340,6 +397,11 @@ let update (msg: Msg) (model: Model) =
         let t = nextTheme model.Theme
         saveTheme t
         { model with Theme = t }, Cmd.none
+    | RollDamage(source, comps) ->
+        match model.Draft with
+        | Some c -> { model with RollResult = Some(rollDamage source comps c.Primary c.Secondary) }, Cmd.none
+        | None -> model, Cmd.none
+    | ClearRoll -> { model with RollResult = None }, Cmd.none
 
 // ---------------------------------------------------------------------------
 // View helpers
@@ -765,6 +827,64 @@ let private itemCard (fields: ReactElement list) (onRemove: unit -> unit) =
 let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
     let d f = dispatch (UpdateDraft f)
 
+    // Editor for a list of damage components (dice + flat + stat modifier + type).
+    let damageEditor (comps: DamageComponent list) (setComps: DamageComponent list -> unit) =
+        Html.div
+            [ prop.className "ll-cardfield"
+              prop.children
+                  [ Html.span [ prop.className "ll-cardfield__label"; prop.text "Damage (one line per type)" ]
+                    (if List.isEmpty comps then
+                         Html.none
+                     else
+                         Html.div
+                             [ prop.children
+                                   [ for j, comp in List.indexed comps ->
+                                         Html.div
+                                             [ prop.className "ll-dmg-row"
+                                               prop.children
+                                                   [ Html.input
+                                                         [ prop.className "ll-input ll-input--sm ll-dmg-dice"
+                                                           prop.placeholder "2d6"
+                                                           prop.value comp.Dice
+                                                           prop.onChange (fun (v: string) -> setComps (updateAt j (fun (cc: DamageComponent) -> { cc with Dice = v }) comps)) ]
+                                                     Html.input
+                                                         [ prop.className "ll-input ll-input--sm ll-dmg-flat"
+                                                           prop.type' "number"
+                                                           prop.title "flat bonus"
+                                                           prop.value comp.Flat
+                                                           prop.onChange (fun (v: string) ->
+                                                               match System.Int32.TryParse v with
+                                                               | true, n -> setComps (updateAt j (fun (cc: DamageComponent) -> { cc with Flat = n }) comps)
+                                                               | _ -> ()) ]
+                                                     Html.select
+                                                         [ prop.className "ll-select ll-input--sm ll-dmg-stat"
+                                                           prop.title "add a stat's modifier"
+                                                           prop.value comp.StatMod
+                                                           prop.onChange (fun (v: string) -> setComps (updateAt j (fun (cc: DamageComponent) -> { cc with StatMod = v }) comps))
+                                                           prop.children [ for n in Dice.statModNames -> Html.option [ prop.value n; prop.text (if n = "" then "no stat" else "+" + n) ] ] ]
+                                                     Html.input
+                                                         [ prop.className "ll-input ll-input--sm ll-dmg-type"
+                                                           prop.placeholder "Fire"
+                                                           prop.value comp.DamageType
+                                                           prop.onChange (fun (v: string) -> setComps (updateAt j (fun (cc: DamageComponent) -> { cc with DamageType = v }) comps)) ]
+                                                     Html.button
+                                                         [ prop.className "ll-btn ll-btn--danger ll-btn--sm"
+                                                           prop.text "✕"
+                                                           prop.onClick (fun _ -> setComps (removeAt j comps)) ] ] ] ] ])
+                    Html.button
+                        [ prop.className "ll-btn ll-btn--ghost ll-btn--sm"
+                          prop.style [ style.marginTop 4 ]
+                          prop.text "+ damage line"
+                          prop.onClick (fun _ -> setComps (comps @ [ Items.emptyDamage ])) ] ] ]
+
+    let rollBtn (name: string) (comps: DamageComponent list) =
+        Html.button
+            [ prop.className "ll-btn ll-btn--accent ll-btn--sm"
+              prop.style [ style.marginTop 6 ]
+              prop.disabled (List.isEmpty comps)
+              prop.text "🎲 Roll Damage"
+              prop.onClick (fun _ -> dispatch (RollDamage((if name.Trim() = "" then "Attack" else name), comps))) ]
+
     // Identity
     let identity =
         sheetSection
@@ -893,9 +1013,10 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
             "+ Weapon"
             [ for i, w in List.indexed c.Weapons ->
                   itemCard
-                      [ cardBox "Name" w.Name (fun v -> d (fun x -> { x with Weapons = updateAt i (fun it -> { it with Name = v }) x.Weapons }))
-                        cardBox "Damage die" w.DamageDie (fun v -> d (fun x -> { x with Weapons = updateAt i (fun it -> { it with DamageDie = v }) x.Weapons }))
-                        cardBox "Description" w.Description (fun v -> d (fun x -> { x with Weapons = updateAt i (fun it -> { it with Description = v }) x.Weapons })) ]
+                      [ cardBox "Name" w.Name (fun v -> d (fun x -> { x with Weapons = updateAt i (fun (it: Weapon) -> { it with Name = v }) x.Weapons }))
+                        cardBox "Description" w.Description (fun v -> d (fun x -> { x with Weapons = updateAt i (fun (it: Weapon) -> { it with Description = v }) x.Weapons }))
+                        damageEditor w.Damage (fun comps -> d (fun x -> { x with Weapons = updateAt i (fun (it: Weapon) -> { it with Damage = comps }) x.Weapons }))
+                        rollBtn w.Name w.Damage ]
                       (fun () -> d (fun x -> { x with Weapons = removeAt i x.Weapons })) ]
             (fun () -> d (fun x -> { x with Weapons = x.Weapons @ [ Items.emptyWeapon ] }))
 
@@ -906,10 +1027,11 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
             [ for i, s in List.indexed c.Spells ->
                   itemCard
                       [ cardBox "Name" s.Name (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with Name = v }) x.Spells }))
-                        cardBox "Damage die" s.DamageDie (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with DamageDie = v }) x.Spells }))
                         cardBox "Cost" s.Cost (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with Cost = v }) x.Spells }))
                         cardBox "Action" s.ActionType (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with ActionType = v }) x.Spells }))
-                        cardBox "Description" s.Description (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with Description = v }) x.Spells })) ]
+                        cardBox "Description" s.Description (fun v -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with Description = v }) x.Spells }))
+                        damageEditor s.Damage (fun comps -> d (fun x -> { x with Spells = updateAt i (fun (it: Spell) -> { it with Damage = comps }) x.Spells }))
+                        rollBtn s.Name s.Damage ]
                       (fun () -> d (fun x -> { x with Spells = removeAt i x.Spells })) ]
             (fun () -> d (fun x -> { x with Spells = x.Spells @ [ Items.emptySpell ] }))
 
@@ -919,11 +1041,12 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
             "+ Skill"
             [ for i, s in List.indexed c.Skills ->
                   itemCard
-                      [ cardBox "Name" s.Name (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with Name = v }) x.Skills }))
-                        cardBox "Damage die" s.DamageDie (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with DamageDie = v }) x.Skills }))
-                        cardBox "Cost" s.Cost (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with Cost = v }) x.Skills }))
-                        cardBox "Action" s.ActionType (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with ActionType = v }) x.Skills }))
-                        cardBox "Description" s.Description (fun v -> d (fun x -> { x with Skills = updateAt i (fun it -> { it with Description = v }) x.Skills })) ]
+                      [ cardBox "Name" s.Name (fun v -> d (fun x -> { x with Skills = updateAt i (fun (it: Skill) -> { it with Name = v }) x.Skills }))
+                        cardBox "Cost" s.Cost (fun v -> d (fun x -> { x with Skills = updateAt i (fun (it: Skill) -> { it with Cost = v }) x.Skills }))
+                        cardBox "Action" s.ActionType (fun v -> d (fun x -> { x with Skills = updateAt i (fun (it: Skill) -> { it with ActionType = v }) x.Skills }))
+                        cardBox "Description" s.Description (fun v -> d (fun x -> { x with Skills = updateAt i (fun (it: Skill) -> { it with Description = v }) x.Skills }))
+                        damageEditor s.Damage (fun comps -> d (fun x -> { x with Skills = updateAt i (fun (it: Skill) -> { it with Damage = comps }) x.Skills }))
+                        rollBtn s.Name s.Damage ]
                       (fun () -> d (fun x -> { x with Skills = removeAt i x.Skills })) ]
             (fun () -> d (fun x -> { x with Skills = x.Skills @ [ Items.emptySkill ] }))
 
@@ -1047,6 +1170,23 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
 // Root view
 // ---------------------------------------------------------------------------
 
+let private rollPanelView (roll: DamageRoll) (dispatch: Msg -> unit) =
+    Html.div
+        [ prop.className "ll-rollpanel"
+          prop.children
+              [ Html.div
+                    [ prop.className "ll-rollpanel__head"
+                      prop.children
+                          [ Html.span [ prop.className "ll-rollpanel__title"; prop.text (sprintf "🎲 %s" roll.Source) ]
+                            Html.button [ prop.className "ll-rollpanel__x"; prop.text "✕"; prop.onClick (fun _ -> dispatch ClearRoll) ] ] ]
+                Html.div [ prop.className "ll-rollpanel__grand"; prop.text (sprintf "%d damage" roll.Grand) ]
+                Html.div
+                    [ prop.className "ll-rollpanel__types"
+                      prop.children [ for (t, tot) in roll.ByType -> Html.span [ prop.className "ll-rollpanel__type"; prop.text (sprintf "%s %d" t tot) ] ] ]
+                Html.div
+                    [ prop.className "ll-rollpanel__detail"
+                      prop.children [ for l in roll.Lines -> Html.div [ prop.text (sprintf "%s: %s = %d" l.DamageType l.Detail l.Total) ] ] ] ] ]
+
 let view (model: Model) (dispatch: Msg -> unit) =
     Html.div
         [ prop.className "ll-app"
@@ -1057,6 +1197,9 @@ let view (model: Model) (dispatch: Msg -> unit) =
                       prop.title "Switch color palette"
                       prop.text (sprintf "🎨 %s" (themeLabel model.Theme))
                       prop.onClick (fun _ -> dispatch CycleTheme) ]
+                (match model.RollResult with
+                 | Some roll -> rollPanelView roll dispatch
+                 | None -> Html.none)
                 (match model.CurrentUser with
                  | Some user -> navbar user model.Page dispatch
                  | None -> Html.none)

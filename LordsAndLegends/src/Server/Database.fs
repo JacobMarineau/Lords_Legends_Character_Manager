@@ -55,7 +55,12 @@ let private listFromJson<'a> (s: string) : 'a list =
     if String.IsNullOrWhiteSpace s then
         []
     else
-        JsonSerializer.Deserialize<'a list>(s, jsonOptions)
+        // Tolerant: if stored JSON predates a shape change (e.g. old weapon
+        // format), fall back to empty rather than crashing the whole read.
+        try
+            JsonSerializer.Deserialize<'a list>(s, jsonOptions)
+        with _ ->
+            []
 
 let private mapFromJson (s: string) : Map<string, int> =
     if String.IsNullOrWhiteSpace s then

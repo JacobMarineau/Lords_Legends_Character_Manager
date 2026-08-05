@@ -88,24 +88,34 @@ type StartingArray =
 // them is a one-line change with no migration.
 // ---------------------------------------------------------------------------
 
+/// One line of damage: dice (e.g. "2d6") + a flat bonus + an optional stat
+/// modifier (a stat whose modifier is added) + a damage type. A weapon or
+/// spell can list several, so it can deal multiple types at once.
+type DamageComponent =
+    { Dice: string
+      Flat: int
+      /// "" for none, or a stat name whose modifier is added ("Might", "Arcana"…).
+      StatMod: string
+      DamageType: string }
+
 type Weapon =
     { Name: string
-      DamageDie: string
-      Description: string }
+      Description: string
+      Damage: DamageComponent list }
 
 type Spell =
     { Name: string
-      DamageDie: string
       Cost: string
       ActionType: string
-      Description: string }
+      Description: string
+      Damage: DamageComponent list }
 
 type Skill =
     { Name: string
-      DamageDie: string
-      ActionType: string
       Cost: string
-      Description: string }
+      ActionType: string
+      Description: string
+      Damage: DamageComponent list }
 
 type EquipmentItem =
     { Name: string
@@ -119,9 +129,10 @@ type MicroStat = { Name: string; Value: int }
 module Items =
     // Spell and Skill share identical field names, so these literals must be
     // annotated or F# infers the last-declared type (Skill) for both.
-    let emptyWeapon: Weapon = { Name = ""; DamageDie = ""; Description = "" }
-    let emptySpell: Spell = { Name = ""; DamageDie = ""; Cost = ""; ActionType = ""; Description = "" }
-    let emptySkill: Skill = { Name = ""; DamageDie = ""; ActionType = ""; Cost = ""; Description = "" }
+    let emptyDamage: DamageComponent = { Dice = "1d6"; Flat = 0; StatMod = ""; DamageType = "" }
+    let emptyWeapon: Weapon = { Name = ""; Description = ""; Damage = [] }
+    let emptySpell: Spell = { Name = ""; Cost = ""; ActionType = ""; Description = ""; Damage = [] }
+    let emptySkill: Skill = { Name = ""; Cost = ""; ActionType = ""; Description = ""; Damage = [] }
     let emptyEquipment: EquipmentItem = { Name = ""; ItemType = ""; Description = "" }
     let emptyMicroStat: MicroStat = { Name = ""; Value = 0 }
 
