@@ -26,6 +26,7 @@
   --off-white-2: #dfe6ea;
   --base: #2b2d42;
   --base-2: #8d99ae;
+  --subnav-text: #2b2d42;
   --card: #ffffff;
   --heading-footer: #2b2d42;
   --trim: #2b2d42;
@@ -45,6 +46,7 @@
   --off-white-2: #dfe6ea;
   --base: #2b2d42;
   --base-2: #8d99ae;
+  --subnav-text: #2b2d42;
   --card: #ffffff;
   --heading-footer: #2b2d42;
   --trim: #2b2d42;
@@ -63,6 +65,7 @@
   --off-white-2: #e2e6d2;
   --base: #45425a;
   --base-2: #6c7d47;
+  --subnav-text: #ffffff;
   --card: #ffffff;
   --heading-footer: #45425a;
   --trim: #575c55;
@@ -81,6 +84,7 @@
   --off-white-2: #ddd6d1;
   --base: #16697a;
   --base-2: #489fb5;
+  --subnav-text: #06333d;
   --card: #ffffff;
   --heading-footer: #16697a;
   --trim: #16697a;
@@ -90,6 +94,44 @@
   --box-shadow: rgba(22, 105, 122, 0.3);
   --text-dark: #23424a;
   --text-light: #ede7e3;
+}
+
+/* Rosethorn — rose pink / magenta / maroon / slate / near-black */
+.ll-app[data-theme="rosethorn"] {
+  --bg: linear-gradient(160deg, #30343f, #1b2021);
+  --off-white: #ffd9da;
+  --off-white-2: #f6c3c5;
+  --base: #30343f;
+  --base-2: #89023e;
+  --subnav-text: #ffd9da;
+  --card: #ffffff;
+  --heading-footer: #30343f;
+  --trim: #89023e;
+  --accent: #ea638c;
+  --accent-text: #1b2021;
+  --contrast: #89023e;
+  --box-shadow: rgba(27, 32, 33, 0.45);
+  --text-dark: #30343f;
+  --text-light: #ffd9da;
+}
+
+/* Carnival — gold / emerald / plum / coral / blush */
+.ll-app[data-theme="carnival"] {
+  --bg: linear-gradient(160deg, #411639, #5c2050);
+  --off-white: #fcd4e4;
+  --off-white-2: #f6bcd3;
+  --base: #411639;
+  --base-2: #f58484;
+  --subnav-text: #411639;
+  --card: #ffffff;
+  --heading-footer: #411639;
+  --trim: #411639;
+  --accent: #f2cd60;
+  --accent-text: #411639;
+  --contrast: #0cca6e;
+  --box-shadow: rgba(65, 22, 57, 0.35);
+  --text-dark: #411639;
+  --text-light: #fcd4e4;
 }
 
 * {
@@ -176,21 +218,21 @@ h1, h2, h3, h4, h5 {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--off-white);
+  color: var(--subnav-text);
+  font-weight: 600;
   padding: 6px 12px;
   border-radius: 4px;
   font-size: 16px;
 }
 .ll-subnav__link:hover,
 .ll-subnav__link.is-active {
-  color: var(--trim);
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.16);
 }
 
 /* ---- Footer ---- */
 .ll-footer {
   background: var(--base-2);
-  color: var(--off-white);
+  color: var(--subnav-text);
   text-align: center;
   padding: 16px 0;
   font-size: 12px;
@@ -482,8 +524,17 @@ h1, h2, h3, h4, h5 {
 .ll-sheet-head {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 18px;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: -24px -28px 18px;
+  padding: 14px 28px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--off-white);
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
 }
 .ll-sheet-section {
   background: rgba(255, 255, 255, 0.55);
@@ -784,4 +835,64 @@ h1, h2, h3, h4, h5 {
   background: var(--accent);
   border-radius: 6px;
   padding: 3px 7px;
+}
+
+/* Minor-stat total badge (the one number; click to edit base, hover for breakdown) */
+.ll-minorstat {
+  cursor: default;
+}
+.ll-minorstat__total {
+  flex: 0 0 auto;
+  min-width: 44px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--accent-text);
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  padding: 4px 9px;
+  cursor: pointer;
+  transition: filter 0.12s ease;
+}
+.ll-minorstat__total:hover {
+  filter: brightness(1.08);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 680px) {
+  .ll-nav {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+  .ll-nav__brand {
+    font-size: 20px;
+  }
+  .ll-panel {
+    padding: 16px 14px;
+    margin: 12px;
+  }
+  .ll-page-title {
+    font-size: 30px;
+  }
+  .ll-grid-2 {
+    grid-template-columns: 1fr;
+  }
+  .ll-sheet-head {
+    margin: -16px -14px 14px;
+    padding: 12px 14px;
+  }
+  .ll-rollpanel {
+    width: calc(100vw - 24px);
+    left: 12px;
+    bottom: 12px;
+  }
+  .ll-theme-toggle {
+    bottom: 12px;
+    right: 12px;
+    padding: 8px 12px;
+  }
+  .ll-steps {
+    flex-wrap: wrap;
+  }
 }

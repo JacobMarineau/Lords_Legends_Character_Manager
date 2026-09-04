@@ -19,12 +19,14 @@ let private removeAt i xs =
 // Theme switcher (three palettes, cycled by a button, persisted in localStorage)
 // ---------------------------------------------------------------------------
 
-let private themes = [ "vanguard"; "wildwood"; "tidewater" ]
+let private themes = [ "vanguard"; "wildwood"; "tidewater"; "rosethorn"; "carnival" ]
 
 let private themeLabel =
     function
     | "wildwood" -> "Wildwood"
     | "tidewater" -> "Tidewater"
+    | "rosethorn" -> "Rosethorn"
+    | "carnival" -> "Carnival"
     | _ -> "Vanguard"
 
 let private loadTheme () =
@@ -159,6 +161,8 @@ type Model =
       Draft: Character option
       Saving: bool
       SaveMsg: string option
+      /// Which minor stat's base value is being edited inline (name), if any.
+      EditingMinor: string option
       // Cosmetic
       Theme: string
       // Dice roller
@@ -196,6 +200,7 @@ type Msg =
     | Created of Character
     // Sheet
     | OpenSheet of Character
+    | EditMinor of string option
     | UpdateDraft of (Character -> Character)
     | SaveDraft
     | Saved of Character
@@ -252,6 +257,7 @@ let init () =
           Draft = None
           Saving = false
           SaveMsg = None
+          EditingMinor = None
           Theme = loadTheme ()
           RollResult = None }
 
@@ -373,7 +379,8 @@ let update (msg: Msg) (model: Model) =
             SaveMsg = None },
         Cmd.none
     // -- Sheet --
-    | OpenSheet c -> { model with Page = Sheet; Draft = Some c; SaveMsg = None; Error = None }, Cmd.none
+    | OpenSheet c -> { model with Page = Sheet; Draft = Some c; SaveMsg = None; Error = None; EditingMinor = None }, Cmd.none
+    | EditMinor m -> { model with EditingMinor = m }, Cmd.none
     | UpdateDraft f -> { model with Draft = model.Draft |> Option.map f; SaveMsg = None }, Cmd.none
     | SaveDraft ->
         match model.Draft with
@@ -499,7 +506,9 @@ let private characterCard (content: Content option) (dispatch: Msg -> unit) (c: 
                                         Html.button
                                             [ prop.className "ll-btn ll-btn--danger ll-btn--sm"
                                               prop.text "Delete"
-                                              prop.onClick (fun _ -> dispatch (Delete c.Id)) ] ] ] ] ]
+                                              prop.onClick (fun _ ->
+                                                  if Browser.Dom.window.confirm (sprintf "Delete %s? This can't be undone." c.Name) then
+                                                      dispatch (Delete c.Id)) ] ] ] ] ]
                 Html.div
                     [ prop.className "ll-stats"
                       prop.children
@@ -972,38 +981,50 @@ let private sheetPage (model: Model) (c: Character) (dispatch: Msg -> unit) =
         let renderGroup (group: string, names: string list) =
             let inherited = Mechanics.minorInheritedModifier group c.Primary c.Secondary
 
+            let renderStat (name: string) =
+                let baseVal = getVal name
+                let total = baseVal + inherited
+
+                let tip =
+                    if group = "Special" then
+                        sprintf "Base %d (ungoverned). Click to edit." baseVal
+                    else
+                        sprintf "Base %d %s from %s = %d. Click to edit." baseVal (fmtMod inherited) group total
+
+                Html.div
+                    [ prop.className "ll-minorstat"
+                      prop.title tip
+                      prop.children
+                          [ Html.span [ prop.className "ll-minorstat__label"; prop.text name ]
+                            (if model.EditingMinor = Some name then
+                                 Html.input
+                                     [ prop.className "ll-input ll-minorstat__input"
+                                       prop.type' "number"
+                                       prop.autoFocus true
+                                       prop.value baseVal
+                                       prop.onChange (fun (v: string) ->
+                                           match System.Int32.TryParse v with
+                                           | true, n -> d (fun x -> { x with MinorStats = Map.add name n x.MinorStats })
+                                           | _ -> ())
+                                       prop.onBlur (fun _ -> dispatch (EditMinor None)) ]
+                             else
+                                 Html.button
+                                     [ prop.className "ll-minorstat__total"
+                                       prop.text (fmtMod total)
+                                       prop.onClick (fun _ -> dispatch (EditMinor(Some name))) ]) ] ]
+
             Html.div
                 [ prop.className "ll-minorgroup"
                   prop.children
-                      [ Html.div
-                            [ prop.className "ll-minorgroup__title"
-                              prop.children
-                                  [ Html.span [ prop.text group ]
-                                    (if group = "Special" then
-                                         Html.none
-                                     else
-                                         Html.span [ prop.className "ll-minorgroup__mod"; prop.text (sprintf "inherits %s" (fmtMod inherited)) ]) ] ]
-                        Html.div
-                            [ prop.className "ll-minorgrid"
-                              prop.children
-                                  [ for name in names ->
-                                        Html.label
-                                            [ prop.className "ll-minorstat"
-                                              prop.children
-                                                  [ Html.span [ prop.className "ll-minorstat__label"; prop.text name ]
-                                                    Html.input
-                                                        [ prop.className "ll-input ll-minorstat__input"
-                                                          prop.type' "number"
-                                                          prop.value (getVal name)
-                                                          prop.onChange (fun (v: string) ->
-                                                              match System.Int32.TryParse v with
-                                                              | true, n -> d (fun x -> { x with MinorStats = Map.add name n x.MinorStats })
-                                                              | _ -> ()) ]
-                                                    Html.span [ prop.className "ll-minorstat__eff"; prop.text (fmtMod (getVal name + inherited)) ] ] ] ] ] ] ]
+                      [ Html.div [ prop.className "ll-minorgroup__title"; prop.children [ Html.span [ prop.text group ] ] ]
+                        Html.div [ prop.className "ll-minorgrid"; prop.children [ for name in names -> renderStat name ] ] ] ]
 
         sheetSection
             "Minor Stats"
-            (Html.p [ prop.className "ll-muted"; prop.style [ style.marginTop 0 ]; prop.text "Each minor stat inherits its major stat's modifier. The value on the right is what you roll with." ]
+            (Html.p
+                [ prop.className "ll-muted"
+                  prop.style [ style.marginTop 0 ]
+                  prop.text "Each number is the total you roll with (base + its major stat's modifier). Hover for the breakdown; click to change the base." ]
              :: (MinorStats.groups |> List.map renderGroup))
 
     // Collections (rendered as neat cards)
